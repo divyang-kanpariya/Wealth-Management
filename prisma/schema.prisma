@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Investment {
+  id         String         @id @default(cuid())
+  type       InvestmentType
+  name       String
+  symbol     String?
+  units      Float?
+  buyPrice   Float?
+  quantity   Float?
+  totalValue Float?
+  buyDate    DateTime
+  goalId     String?
+  accountId  String
+  notes      String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+  account    Account        @relation(fields: [accountId], references: [id])
+  goal       Goal?          @relation(fields: [goalId], references: [id])
+
+  @@index([accountId], map: "investments_accountId_fkey")
+  @@index([goalId], map: "investments_goalId_fkey")
+  @@map("investments")
+}
+
+model Goal {
+  id           String       @id @default(cuid())
+  name         String
+  targetAmount Float
+  targetDate   DateTime
+  priority     Int?         @default(1)
+  description  String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  investments  Investment[]
+
+  @@map("goals")
+}
+
+model Account {
+  id          String       @id @default(cuid())
+  name        String
+  type        AccountType
+  notes       String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  investments Investment[]
+
+  @@map("accounts")
+}
+
+model PriceCache {
+  id          String   @id @default(cuid())
+  symbol      String   @unique
+  price       Float
+  lastUpdated DateTime @default(now())
+  source      String
+
+  @@map("price_cache")
+}
+
+enum InvestmentType {
+  STOCK
+  MUTUAL_FUND
+  GOLD
+  JEWELRY
+  REAL_ESTATE
+  FD
+  CRYPTO
+  OTHER
+}
+
+enum AccountType {
+  BROKER
+  DEMAT
+  BANK
+  OTHER
+}
