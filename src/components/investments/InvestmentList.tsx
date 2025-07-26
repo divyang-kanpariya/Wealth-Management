@@ -86,9 +86,14 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         accountsRes.json(),
       ]);
 
-      setInvestments(investmentsData || []);
-      setGoals(goalsData || []);
-      setAccounts(accountsData || []);
+      // Extract data from paginated responses
+      const investmentsArray = investmentsData?.data || investmentsData || [];
+      const goalsArray = goalsData?.data || goalsData || [];
+      const accountsArray = accountsData?.data || accountsData || [];
+
+      setInvestments(investmentsArray);
+      setGoals(goalsArray);
+      setAccounts(accountsArray);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
     } finally {
@@ -317,8 +322,12 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           accountsRes.json(),
         ]);
 
-        setGoals(goalsData || []);
-        setAccounts(accountsData || []);
+        // Extract data from paginated responses
+        const goalsArray = goalsData?.data || goalsData || [];
+        const accountsArray = accountsData?.data || accountsData || [];
+
+        setGoals(goalsArray);
+        setAccounts(accountsArray);
       }
     } catch (err) {
       console.error('Failed to refresh accounts and goals:', err);

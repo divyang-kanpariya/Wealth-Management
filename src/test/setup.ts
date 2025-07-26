@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom'
-import { vi } from 'vitest'
+import React from 'react'
 
-// Make vitest globals available
-(global as any).vi = vi
+// Make React available globally for JSX
+(global as any).React = React
