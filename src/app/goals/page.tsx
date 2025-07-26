@@ -1,15 +1,16 @@
-import React from 'react';
-import { GoalList } from '@/components/goals';
+'use client'
 
-export const metadata = {
-  title: 'Financial Goals | Personal Wealth Management',
-  description: 'Manage your financial goals and track progress towards them',
-};
+import React from 'react';
+import Layout from '@/components/layout/Layout';
+import { GoalList } from '@/components/goals';
 
 export default function GoalsPage() {
   return (
-    <div className="container mx-auto px-4 py-8">
+    <Layout 
+      title="Financial Goals" 
+      subtitle="Manage your financial goals and track progress towards them"
+    >
       <GoalList />
-    </div>
+    </Layout>
   );
 }

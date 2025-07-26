@@ -21,8 +21,15 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
   const body = await parseRequestBody(request)
   const validatedData = validateInvestment(body)
   
+  // Transform null values to undefined for Prisma and remove undefined fields
+  const { goalId, ...restData } = validatedData
+  const transformedData = {
+    ...restData,
+    ...(goalId && goalId !== null ? { goalId } : {})
+  }
+  
   const investment = await prisma.investment.create({
-    data: validatedData,
+    data: transformedData as any,
     include: {
       goal: true,
       account: true,

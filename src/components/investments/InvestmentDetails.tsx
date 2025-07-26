@@ -148,7 +148,7 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
   const { gainLoss, gainLossPercentage, currentValue } = investmentWithValue;
   const isUnitBased = investment.units && investment.buyPrice;
   const investedValue = isUnitBased 
-    ? investment.units * investment.buyPrice 
+    ? (investment.units ?? 0) * (investment.buyPrice ?? 0)
     : investment.totalValue || 0;
 
   const gainLossColor = gainLoss >= 0 ? 'text-green-600' : 'text-red-600';

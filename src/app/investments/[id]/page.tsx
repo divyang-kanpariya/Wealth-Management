@@ -1,18 +1,51 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import InvestmentDetails from '@/components/investments/InvestmentDetails'
 import Layout from '@/components/layout/Layout'
+import { BreadcrumbItem } from '@/components/ui'
+import { Investment } from '@/types'
 
 interface InvestmentDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
 export default function InvestmentDetailsPage({ params }: InvestmentDetailsPageProps) {
   const router = useRouter()
+  const [investment, setInvestment] = useState<Investment | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [investmentId, setInvestmentId] = useState<string>('')
+
+  useEffect(() => {
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setInvestmentId(resolvedParams.id);
+    };
+    initializeParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (investmentId) {
+      fetchInvestment();
+    }
+  }, [investmentId]);
+
+  const fetchInvestment = async () => {
+    try {
+      const response = await fetch(`/api/investments/${investmentId}`)
+      if (response.ok) {
+        const data = await response.json()
+        setInvestment(data)
+      }
+    } catch (error) {
+      console.error('Error fetching investment:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleBack = () => {
     router.push('/investments')
@@ -28,16 +61,25 @@ export default function InvestmentDetailsPage({ params }: InvestmentDetailsPageP
     console.log('Delete investment:', investment)
   }
 
+  // Generate breadcrumbs
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Dashboard', href: '/' },
+    { label: 'Investments', href: '/investments' },
+    { label: loading ? 'Loading...' : (investment?.name || 'Investment Details'), current: true }
+  ]
+
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <InvestmentDetails
-          investmentId={params.id}
-          onBack={handleBack}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </div>
+    <Layout 
+      title={loading ? 'Investment Details' : investment?.name || 'Investment Details'}
+      subtitle="View and manage investment details"
+      breadcrumbs={breadcrumbs}
+    >
+      <InvestmentDetails
+        investmentId={investmentId}
+        onBack={handleBack}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
     </Layout>
   )
 }

@@ -4,12 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Layout from '@/components/layout/Layout';
 import { Account, Investment } from '@/types';
-import Button from '@/components/ui/Button';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import ErrorState from '@/components/ui/ErrorState';
+import { Button, LoadingSpinner, ErrorState, Modal, Alert, BreadcrumbItem } from '@/components/ui';
 import { AccountForm } from '@/components/accounts';
-import Modal from '@/components/ui/Modal';
-import Alert from '@/components/ui/Alert';
 
 interface AccountWithInvestments extends Account {
   totalValue: number;
@@ -81,7 +77,7 @@ const AccountDetailsPage: React.FC = () => {
     if (accountId) {
       fetchAccount();
     }
-  }, [accountId]);
+  }, [accountId, fetchAccount]);
 
   // Handle account update
   const handleAccountUpdate = async (formData: any) => {
@@ -170,13 +166,22 @@ const AccountDetailsPage: React.FC = () => {
     }
   };
 
+  // Generate breadcrumbs
+  const breadcrumbs: BreadcrumbItem[] = [
+    { label: 'Dashboard', href: '/' },
+    { label: 'Accounts', href: '/accounts' },
+    { label: isLoading ? 'Loading...' : (account?.name || 'Account Details'), current: true }
+  ];
+
   if (isLoading) {
     return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex justify-center items-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
+      <Layout 
+        title="Account Details"
+        subtitle="Loading account information..."
+        breadcrumbs={breadcrumbs}
+      >
+        <div className="flex justify-center items-center py-12">
+          <LoadingSpinner size="lg" />
         </div>
       </Layout>
     );
@@ -184,36 +189,44 @@ const AccountDetailsPage: React.FC = () => {
 
   if (error) {
     return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <ErrorState
-            title="Failed to load account"
-            message={error}
-            onRetry={fetchAccount}
-          />
-        </div>
+      <Layout 
+        title="Account Details"
+        subtitle="Failed to load account"
+        breadcrumbs={breadcrumbs}
+      >
+        <ErrorState
+          title="Failed to load account"
+          message={error}
+          onRetry={fetchAccount}
+        />
       </Layout>
     );
   }
 
   if (!account) {
     return (
-      <Layout>
-        <div className="container mx-auto px-4 py-8">
-          <ErrorState
-            title="Account not found"
-            message="The requested account could not be found."
-            onRetry={() => router.push('/accounts')}
-            retryLabel="Back to Accounts"
-          />
-        </div>
+      <Layout 
+        title="Account Details"
+        subtitle="Account not found"
+        breadcrumbs={breadcrumbs}
+      >
+        <ErrorState
+          title="Account not found"
+          message="The requested account could not be found."
+          onRetry={() => router.push('/accounts')}
+          retryText="Back to Accounts"
+        />
       </Layout>
     );
   }
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
+    <Layout 
+      title={account.name}
+      subtitle="Manage account details and view linked investments"
+      breadcrumbs={breadcrumbs}
+    >
+      <div>
         {/* Header */}
         <div className="flex justify-between items-start mb-8">
           <div>
@@ -343,7 +356,7 @@ const AccountDetailsPage: React.FC = () => {
                 </svg>
               </div>
               <h4 className="text-lg font-medium text-gray-900 mb-2">No investments yet</h4>
-              <p className="text-gray-600 mb-4">This account doesn't have any investments linked to it.</p>
+              <p className="text-gray-600 mb-4">This account doesn&apos;t have any investments linked to it.</p>
               <Button
                 variant="outline"
                 onClick={() => router.push('/investments')}
@@ -378,7 +391,7 @@ const AccountDetailsPage: React.FC = () => {
         >
           <div className="space-y-4">
             <p className="text-gray-600">
-              Are you sure you want to delete "{account.name}"?
+              Are you sure you want to delete &quot;{account.name}&quot;?
             </p>
             {account.investmentCount > 0 ? (
               <div className="bg-red-50 border border-red-200 rounded-md p-4">

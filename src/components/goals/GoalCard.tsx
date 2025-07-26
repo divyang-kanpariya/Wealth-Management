@@ -133,7 +133,7 @@ const GoalCard: React.FC<GoalCardProps> = ({
       
       <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex justify-between">
         <Button
-          variant="text"
+          variant="outline"
           size="sm"
           onClick={onViewDetails}
           disabled={isLoading}

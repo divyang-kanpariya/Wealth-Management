@@ -93,3 +93,39 @@ export interface PriceResponse {
   lastUpdated: Date
   warning?: string
 }
+
+// Advanced portfolio features types
+export interface InvestmentFilters {
+  search?: string
+  type?: InvestmentType | 'ALL'
+  goalId?: string | 'ALL'
+  accountId?: string | 'ALL'
+  dateRange?: {
+    start?: Date
+    end?: Date
+  }
+  valueRange?: {
+    min?: number
+    max?: number
+  }
+}
+
+export interface InvestmentSortOptions {
+  field: 'name' | 'currentValue' | 'gainLoss' | 'gainLossPercentage' | 'buyDate' | 'type'
+  direction: 'asc' | 'desc'
+}
+
+export interface BulkOperationResult {
+  success: number
+  failed: number
+  errors: string[]
+}
+
+export interface ExportOptions {
+  format: 'csv' | 'json'
+  includeCurrentPrices: boolean
+  dateRange?: {
+    start?: Date
+    end?: Date
+  }
+}

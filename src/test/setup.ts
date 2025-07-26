@@ -2,4 +2,4 @@ import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
 // Make vitest globals available
-global.vi = vi
+(global as any).vi = vi

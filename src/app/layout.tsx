@@ -5,8 +5,14 @@ import './globals.css'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Personal Wealth Management',
-  description: 'Track your investments and financial goals',
+  title: {
+    template: '%s | Personal Wealth Management',
+    default: 'Personal Wealth Management',
+  },
+  description: 'Track your investments, manage financial goals, and monitor portfolio performance',
+  keywords: ['investment', 'portfolio', 'wealth management', 'financial goals', 'stocks', 'mutual funds'],
+  authors: [{ name: 'Personal Wealth Management' }],
+  viewport: 'width=device-width, initial-scale=1',
 }
 
 export default function RootLayout({

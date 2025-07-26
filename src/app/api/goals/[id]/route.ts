@@ -5,9 +5,9 @@ import { withErrorHandling, parseRequestBody, createSuccessResponse, NotFoundErr
 
 export const GET = withErrorHandling(async (
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const { id } = params
+  const { id } = await params
   
   const goal = await prisma.goal.findUnique({
     where: { id },
@@ -29,9 +29,9 @@ export const GET = withErrorHandling(async (
 
 export const PUT = withErrorHandling(async (
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const { id } = params
+  const { id } = await params
   const body = await parseRequestBody(request)
   const validatedData = validateUpdateGoal(body)
   
@@ -57,9 +57,9 @@ export const PUT = withErrorHandling(async (
 
 export const DELETE = withErrorHandling(async (
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) => {
-  const { id } = params
+  const { id } = await params
   
   // Check if goal exists
   const existingGoal = await prisma.goal.findUnique({
@@ -77,7 +77,7 @@ export const DELETE = withErrorHandling(async (
   if (existingGoal.investments.length > 0) {
     await prisma.investment.updateMany({
       where: { goalId: id },
-      data: { goalId: null },
+      data: { goalId: null as any },
     })
   }
   

@@ -9,6 +9,9 @@ interface InvestmentCardProps {
   onDelete: (investment: Investment) => void;
   onViewDetails?: (investment: Investment) => void;
   isLoading?: boolean;
+  isSelected?: boolean;
+  onSelectionChange?: (investment: Investment, selected: boolean) => void;
+  showSelection?: boolean;
 }
 
 const InvestmentCard: React.FC<InvestmentCardProps> = ({
@@ -17,6 +20,9 @@ const InvestmentCard: React.FC<InvestmentCardProps> = ({
   onDelete,
   onViewDetails,
   isLoading = false,
+  isSelected = false,
+  onSelectionChange,
+  showSelection = false,
 }) => {
   const { investment, currentPrice, currentValue, gainLoss, gainLossPercentage } = investmentWithValue;
 
@@ -48,14 +54,35 @@ const InvestmentCard: React.FC<InvestmentCardProps> = ({
 
   const isUnitBased = investment.units && investment.buyPrice;
   const investedValue = isUnitBased 
-    ? investment.units * investment.buyPrice 
+    ? (investment.units ?? 0) * (investment.buyPrice ?? 0)
     : investment.totalValue || 0;
 
   const gainLossColor = gainLoss >= 0 ? 'text-green-600' : 'text-red-600';
   const gainLossBgColor = gainLoss >= 0 ? 'bg-green-50' : 'bg-red-50';
 
+  const handleSelectionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (onSelectionChange) {
+      onSelectionChange(investment, e.target.checked);
+    }
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 hover:shadow-lg transition-shadow">
+    <div className={`bg-white rounded-lg shadow-md border p-6 hover:shadow-lg transition-shadow ${
+      isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+    }`}>
+      {/* Selection checkbox */}
+      {showSelection && (
+        <div className="flex items-center mb-4">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={handleSelectionChange}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          />
+          <label className="ml-2 text-sm text-gray-600">Select</label>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div 

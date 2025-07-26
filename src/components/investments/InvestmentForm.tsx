@@ -224,7 +224,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             step="0.001"
             min="0"
             value={formData.units || ''}
-            onChange={(e) => handleInputChange('units', parseFloat(e.target.value) || undefined)}
+            onChange={(e) => handleInputChange('units', e.target.value ? parseFloat(e.target.value) : '')}
             error={errors.units}
             placeholder="Enter quantity"
             required={isUnitBased}
@@ -240,7 +240,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             step="0.01"
             min="0"
             value={formData.buyPrice || ''}
-            onChange={(e) => handleInputChange('buyPrice', parseFloat(e.target.value) || undefined)}
+            onChange={(e) => handleInputChange('buyPrice', e.target.value ? parseFloat(e.target.value) : '')}
             error={errors.buyPrice}
             placeholder="Enter price"
             required={isUnitBased}
@@ -255,7 +255,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
             step="0.01"
             min="0"
             value={formData.totalValue || ''}
-            onChange={(e) => handleInputChange('totalValue', parseFloat(e.target.value) || undefined)}
+            onChange={(e) => handleInputChange('totalValue', e.target.value ? parseFloat(e.target.value) : '')}
             error={errors.totalValue}
             placeholder="Enter total value"
             required={!isUnitBased}
@@ -279,7 +279,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
           <Select
             label="Financial Goal (Optional)"
             value={formData.goalId || ''}
-            onChange={(e) => handleInputChange('goalId', e.target.value || undefined)}
+            onChange={(e) => handleInputChange('goalId', e.target.value || '')}
             options={[
               { value: '', label: 'No specific goal' },
               ...goalOptions

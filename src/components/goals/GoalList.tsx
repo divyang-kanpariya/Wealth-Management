@@ -257,10 +257,10 @@ const GoalList: React.FC<GoalListProps> = ({ className = '', onViewDetails }) =>
       >
         <div className="space-y-4">
           <p className="text-gray-600">
-            Are you sure you want to delete "{selectedGoal?.name}"? This action cannot be undone.
-            {selectedGoal?.investments?.length > 0 && (
+            Are you sure you want to delete &quot;{selectedGoal?.name}&quot;? This action cannot be undone.
+            {(selectedGoal?.investments?.length ?? 0) > 0 && (
               <span className="block mt-2 text-amber-600">
-                Note: This goal has {selectedGoal.investments.length} linked investments. 
+                Note: This goal has {selectedGoal?.investments?.length ?? 0} linked investments. 
                 These investments will be updated to have no goal.
               </span>
             )}

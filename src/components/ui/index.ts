@@ -6,6 +6,7 @@ export { default as LoadingSpinner } from './LoadingSpinner';
 export { default as LoadingState } from './LoadingState';
 export { default as ErrorState } from './ErrorState';
 export { default as Alert } from './Alert';
+export { default as Breadcrumb } from './Breadcrumb';
 
 export type { ButtonProps } from './Button';
 export type { InputProps } from './Input';
@@ -15,3 +16,4 @@ export type { LoadingSpinnerProps } from './LoadingSpinner';
 export type { LoadingStateProps } from './LoadingState';
 export type { ErrorStateProps } from './ErrorState';
 export type { AlertProps } from './Alert';
+export type { BreadcrumbProps, BreadcrumbItem } from './Breadcrumb';

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCachedPrice, fetchMutualFundNAV } from '@/lib/price-fetcher'
+import { getCachedPrice, fetchMutualFundNAV, getMutualFundNAV, batchGetMutualFundNAVs } from '@/lib/price-fetcher'
 import { z } from 'zod'
 
 // Validation schemas
@@ -75,17 +75,17 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({ data: results })
       } else {
-        // For now, return empty data for mutual funds as we're focusing on stocks
-        // This can be implemented later with a mutual fund API
-        const results = schemeCodeArray.map(schemeCode => ({
-          schemeCode,
-          nav: null,
-          source: 'NOT_IMPLEMENTED',
+        // Fetch fresh NAV data
+        const results = await batchGetMutualFundNAVs(schemeCodeArray)
+        const formattedResults = results.map(result => ({
+          schemeCode: result.schemeCode,
+          nav: result.nav,
+          source: result.nav ? 'AMFI' : null,
           cached: false,
-          error: 'Mutual fund pricing not implemented yet'
+          error: result.error
         }))
         
-        return NextResponse.json({ data: results })
+        return NextResponse.json({ data: formattedResults })
       }
     }
 
@@ -111,14 +111,24 @@ export async function GET(request: NextRequest) {
           cached: true
         })
       } else {
-        // For now, return null for mutual funds as we're focusing on stocks
-        return NextResponse.json({
-          schemeCode: query.schemeCode,
-          nav: null,
-          source: 'NOT_IMPLEMENTED',
-          cached: false,
-          error: 'Mutual fund pricing not implemented yet'
-        })
+        // Fetch fresh NAV data
+        try {
+          const nav = await getMutualFundNAV(query.schemeCode)
+          return NextResponse.json({
+            schemeCode: query.schemeCode,
+            nav,
+            source: 'AMFI',
+            cached: false
+          })
+        } catch (error) {
+          return NextResponse.json({
+            schemeCode: query.schemeCode,
+            nav: null,
+            source: null,
+            cached: false,
+            error: error instanceof Error ? error.message : 'Unknown error'
+          })
+        }
       }
     }
 
@@ -162,23 +172,24 @@ export async function POST(request: NextRequest) {
 
     const { schemeCodes } = validation.data
     
-    // For now, return empty data for mutual funds as we're focusing on stocks
-    const results = schemeCodes.map(schemeCode => ({
-      schemeCode,
-      nav: null,
-      source: 'NOT_IMPLEMENTED',
+    // Fetch fresh NAV data
+    const results = await batchGetMutualFundNAVs(schemeCodes)
+    const formattedResults = results.map(result => ({
+      schemeCode: result.schemeCode,
+      nav: result.nav,
+      source: result.nav ? 'AMFI' : null,
       cached: false,
-      error: 'Mutual fund pricing not implemented yet'
+      error: result.error
     }))
     
-    return NextResponse.json({ data: results })
+    return NextResponse.json({ data: formattedResults })
 
   } catch (error) {
     console.error('Mutual fund NAV batch API error:', error)
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: validation.error.errors },
+        { error: 'Validation error', details: error.errors },
         { status: 400 }
       )
     }

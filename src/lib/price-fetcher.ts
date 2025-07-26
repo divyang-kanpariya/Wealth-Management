@@ -267,9 +267,140 @@ export async function getCacheStats(): Promise<{
   }
 }
 
-// Legacy function for backward compatibility
-export async function fetchMutualFundNAV(): Promise<any[]> {
-  // For now, return empty array as we're focusing on stocks
-  // This can be implemented later if needed
-  return []
+/**
+ * Fetch mutual fund NAV from AMFI API
+ */
+export async function fetchMutualFundNAV(schemeCodes?: string[]): Promise<Array<{ schemeCode: string; nav: number; date: string; schemeName: string }>> {
+  try {
+    // AMFI NAV API endpoint
+    const response = await fetch('https://www.amfiindia.com/spages/NAVAll.txt')
+    
+    if (!response.ok) {
+      throw new Error(`AMFI API error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.text()
+    const lines = data.split('\n')
+    const navData: Array<{ schemeCode: string; nav: number; date: string; schemeName: string }> = []
+
+    for (const line of lines) {
+      // Skip empty lines, headers, and category headers
+      if (!line.trim() || 
+          line.includes('Scheme Code') || 
+          line.includes('ISIN') ||
+          line.includes('Open Ended Schemes') ||
+          line.includes('Close Ended Schemes') ||
+          line.includes('Interval Fund Schemes') ||
+          !line.includes(';')) {
+        continue
+      }
+
+      // Parse the line - format: SchemeCode;ISIN1;ISIN2;SchemeName;NAV;Date
+      const parts = line.split(';')
+      if (parts.length >= 6) {
+        const schemeCode = parts[0]?.trim()
+        const schemeName = parts[3]?.trim()
+        const navString = parts[4]?.trim()
+        const dateString = parts[5]?.trim()
+
+        // Parse NAV value
+        const nav = parseFloat(navString)
+        
+        if (schemeCode && schemeName && !isNaN(nav) && nav > 0) {
+          // If specific scheme codes are requested, filter for them
+          if (!schemeCodes || schemeCodes.includes(schemeCode)) {
+            navData.push({
+              schemeCode,
+              nav,
+              date: dateString || new Date().toISOString().split('T')[0],
+              schemeName
+            })
+          }
+        }
+      }
+    }
+
+    console.log(`Fetched ${navData.length} mutual fund NAV records from AMFI`)
+    return navData
+  } catch (error) {
+    console.error('Error fetching mutual fund NAV from AMFI:', error)
+    throw new Error('Failed to fetch mutual fund NAV data')
+  }
+}
+
+/**
+ * Get mutual fund NAV for a specific scheme code
+ */
+export async function getMutualFundNAV(schemeCode: string): Promise<number> {
+  // Try to get from cache first
+  const cached = await getCachedPrice(schemeCode)
+  if (cached) {
+    return cached.price
+  }
+
+  // Fetch fresh NAV data
+  try {
+    const navData = await fetchMutualFundNAV([schemeCode])
+    const schemeData = navData.find(item => item.schemeCode === schemeCode)
+    
+    if (!schemeData) {
+      throw new Error(`NAV not found for scheme code ${schemeCode}`)
+    }
+
+    // Update cache
+    await updatePriceCache(schemeCode, schemeData.nav, 'AMFI')
+    
+    return schemeData.nav
+  } catch (error) {
+    // If fresh fetch fails, try to get stale cache data
+    try {
+      const staleCache = await prisma.priceCache.findUnique({
+        where: { symbol: schemeCode }
+      })
+      
+      if (staleCache) {
+        console.warn(`Using stale cache data for mutual fund ${schemeCode}`)
+        return staleCache.price
+      }
+    } catch (cacheError) {
+      console.error('Error reading stale cache:', cacheError)
+    }
+    
+    throw error
+  }
+}
+
+/**
+ * Batch fetch mutual fund NAVs for multiple scheme codes
+ */
+export async function batchGetMutualFundNAVs(schemeCodes: string[]): Promise<Array<{ schemeCode: string; nav: number | null; error?: string }>> {
+  try {
+    const navData = await fetchMutualFundNAV(schemeCodes)
+    
+    return schemeCodes.map(schemeCode => {
+      const schemeData = navData.find(item => item.schemeCode === schemeCode)
+      
+      if (schemeData) {
+        // Update cache for successful fetches
+        updatePriceCache(schemeCode, schemeData.nav, 'AMFI').catch(err => 
+          console.error(`Failed to cache NAV for ${schemeCode}:`, err)
+        )
+        
+        return { schemeCode, nav: schemeData.nav }
+      } else {
+        return { 
+          schemeCode, 
+          nav: null, 
+          error: `NAV not available for scheme code ${schemeCode}` 
+        }
+      }
+    })
+  } catch (error) {
+    // If batch fetch fails, return error for all scheme codes
+    return schemeCodes.map(schemeCode => ({
+      schemeCode,
+      nav: null,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    }))
+  }
 }

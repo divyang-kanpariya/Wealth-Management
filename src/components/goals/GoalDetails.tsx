@@ -226,7 +226,7 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ goalId, onBack }) => {
   }
 
   const { currentAmount, percentage } = calculateProgress(goal);
-  const timeRemaining = calculateTimeRemaining(goal.targetDate);
+  const timeRemaining = calculateTimeRemaining(goal.targetDate.toISOString());
   const priorityInfo = getPriorityLabel(goal.priority || 3);
 
   return (
@@ -307,7 +307,7 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ goalId, onBack }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <div className="text-sm text-gray-500 mb-1">Target Date</div>
-                <div className="font-medium">{formatDate(goal.targetDate)}</div>
+                <div className="font-medium">{formatDate(goal.targetDate.toISOString())}</div>
               </div>
               <div>
                 <div className="text-sm text-gray-500 mb-1">Time Remaining</div>
@@ -413,7 +413,7 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ goalId, onBack }) => {
       >
         <div className="space-y-4">
           <p className="text-gray-600">
-            Are you sure you want to delete "{goal.name}"? This action cannot be undone.
+            Are you sure you want to delete &quot;{goal.name}&quot;? This action cannot be undone.
             {goal.investments && goal.investments.length > 0 && (
               <span className="block mt-2 text-amber-600">
                 Note: This goal has {goal.investments.length} linked investments. 

@@ -15,14 +15,8 @@ export interface NavigationProps {
 }
 
 const Navigation: React.FC<NavigationProps> = ({ items, isMobile = false }) => {
-  // Use usePathname for App Router, with fallback for safety
-  let pathname = '/';
-  try {
-    pathname = usePathname();
-  } catch (error) {
-    // Fallback if router is not available (e.g., in tests)
-    console.warn('usePathname not available, using default pathname');
-  }
+  // Use usePathname for App Router
+  const pathname = usePathname();
   
   const isCurrentPath = (href: string) => {
     if (href === '/') {

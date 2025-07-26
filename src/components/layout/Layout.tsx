@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Header from './Header';
 import Navigation, { NavigationItem } from './Navigation';
+import { Breadcrumb, BreadcrumbItem } from '@/components/ui';
+import { getBreadcrumbsForPage } from '@/lib/breadcrumb-utils';
 
 export interface LayoutProps {
   children: React.ReactNode;
   title?: string;
   subtitle?: string;
   headerActions?: React.ReactNode;
+  breadcrumbs?: BreadcrumbItem[];
+  showBreadcrumbs?: boolean;
 }
 
 const Layout: React.FC<LayoutProps> = ({
   children,
   title,
   subtitle,
-  headerActions
+  headerActions,
+  breadcrumbs,
+  showBreadcrumbs = true
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const pathname = usePathname();
+  
+  // Generate breadcrumbs if not provided
+  const finalBreadcrumbs = breadcrumbs || getBreadcrumbsForPage(pathname, title);
 
   const navigationItems: NavigationItem[] = [
     {
@@ -123,6 +134,12 @@ const Layout: React.FC<LayoutProps> = ({
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        {/* Breadcrumbs */}
+        {showBreadcrumbs && finalBreadcrumbs.length > 1 && (
+          <div className="mb-6">
+            <Breadcrumb items={finalBreadcrumbs} />
+          </div>
+        )}
         {children}
       </main>
     </div>

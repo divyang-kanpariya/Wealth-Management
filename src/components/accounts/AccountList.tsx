@@ -288,9 +288,9 @@ const AccountList: React.FC<AccountListProps> = ({ className = '', onViewDetails
       >
         <div className="space-y-4">
           <p className="text-gray-600">
-            Are you sure you want to delete "{selectedAccount?.name}"?
+            Are you sure you want to delete &quot;{selectedAccount?.name}&quot;?
           </p>
-          {selectedAccount?.investmentCount > 0 ? (
+          {(selectedAccount?.investmentCount ?? 0) > 0 ? (
             <div className="bg-red-50 border border-red-200 rounded-md p-4">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -304,7 +304,7 @@ const AccountList: React.FC<AccountListProps> = ({ className = '', onViewDetails
                   </h3>
                   <div className="mt-2 text-sm text-red-700">
                     <p>
-                      This account has {selectedAccount.investmentCount} linked investment{selectedAccount.investmentCount !== 1 ? 's' : ''}. 
+                      This account has {selectedAccount?.investmentCount ?? 0} linked investment{(selectedAccount?.investmentCount ?? 0) !== 1 ? 's' : ''}. 
                       Please reassign or delete these investments first.
                     </p>
                   </div>

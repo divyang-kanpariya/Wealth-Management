@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Investment, InvestmentWithCurrentValue, Goal, Account } from '@/types';
+import { 
+  Investment, 
+  InvestmentWithCurrentValue, 
+  Goal, 
+  Account,
+  InvestmentFilters,
+  InvestmentSortOptions,
+  BulkOperationResult
+} from '@/types';
 import { calculateInvestmentValue } from '@/lib/calculations';
+import { filterInvestments, sortInvestments } from '@/lib/portfolio-utils';
 import InvestmentCard from './InvestmentCard';
 import InvestmentForm from './InvestmentForm';
 import InvestmentDetails from './InvestmentDetails';
+import InvestmentFiltersComponent from './InvestmentFilters';
+import InvestmentSort from './InvestmentSort';
+import BulkOperations from './BulkOperations';
+import ExportPortfolio from './ExportPortfolio';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import LoadingSpinner from '../ui/LoadingSpinner';
@@ -32,6 +45,17 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
   const [error, setError] = useState<string | null>(null);
   const [priceData, setPriceData] = useState<Map<string, number>>(new Map());
   const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
+
+  // Advanced features state
+  const [filters, setFilters] = useState<InvestmentFilters>({});
+  const [sortOptions, setSortOptions] = useState<InvestmentSortOptions>({
+    field: 'buyDate',
+    direction: 'desc'
+  });
+  const [selectedInvestments, setSelectedInvestments] = useState<Investment[]>([]);
+  const [showBulkSelection, setShowBulkSelection] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [filteredAndSortedInvestments, setFilteredAndSortedInvestments] = useState<InvestmentWithCurrentValue[]>([]);
 
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -162,6 +186,17 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       setInvestmentsWithValues(investmentsWithValues);
     }
   }, [investments, priceData]);
+
+  // Apply filters and sorting
+  useEffect(() => {
+    if (investmentsWithValues.length > 0) {
+      let filtered = filterInvestments(investmentsWithValues, filters);
+      let sorted = sortInvestments(filtered, sortOptions);
+      setFilteredAndSortedInvestments(sorted);
+    } else {
+      setFilteredAndSortedInvestments([]);
+    }
+  }, [investmentsWithValues, filters, sortOptions]);
 
   // Initial data fetch
   useEffect(() => {
@@ -300,6 +335,59 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     setTimeout(() => setStatusMessage(null), 3000);
   };
 
+  // Advanced features handlers
+  const handleFiltersChange = (newFilters: InvestmentFilters) => {
+    setFilters(newFilters);
+  };
+
+  const handleFiltersReset = () => {
+    setFilters({});
+  };
+
+  const handleSortChange = (newSortOptions: InvestmentSortOptions) => {
+    setSortOptions(newSortOptions);
+  };
+
+  const handleSelectionChange = (investment: Investment, selected: boolean) => {
+    if (selected) {
+      setSelectedInvestments(prev => [...prev, investment]);
+    } else {
+      setSelectedInvestments(prev => prev.filter(inv => inv.id !== investment.id));
+    }
+  };
+
+  const handleBulkSelectionToggle = () => {
+    setShowBulkSelection(!showBulkSelection);
+    if (showBulkSelection) {
+      setSelectedInvestments([]);
+    }
+  };
+
+  const handleBulkDelete = async (investmentIds: string[]): Promise<BulkOperationResult> => {
+    const response = await fetch('/api/investments/bulk', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ investmentIds }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete investments');
+    }
+
+    const result = await response.json();
+    return result;
+  };
+
+  const handleExportOpen = () => {
+    setIsExportModalOpen(true);
+  };
+
+  const handleExportClose = () => {
+    setIsExportModalOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className={`flex justify-center items-center py-12 ${className}`}>
@@ -327,7 +415,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         <div>
           <h2 className="text-2xl font-bold text-gray-900">My Investments</h2>
           <p className="text-gray-600 mt-1">
-            {investments.length} investment{investments.length !== 1 ? 's' : ''}
+            {filteredAndSortedInvestments.length} of {investments.length} investment{investments.length !== 1 ? 's' : ''}
             {lastPriceUpdate && (
               <span className="ml-2 text-sm">
                 • Prices updated {lastPriceUpdate.toLocaleTimeString()}
@@ -336,6 +424,20 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           </p>
         </div>
         <div className="flex space-x-3">
+          <Button
+            variant="outline"
+            onClick={handleExportOpen}
+            disabled={isSubmitting || investments.length === 0}
+          >
+            Export
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleBulkSelectionToggle}
+            disabled={isSubmitting || investments.length === 0}
+          >
+            {showBulkSelection ? 'Cancel Selection' : 'Select Multiple'}
+          </Button>
           <Button
             variant="outline"
             onClick={handleRefreshPrices}
@@ -348,6 +450,40 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           </Button>
         </div>
       </div>
+
+      {/* Filters */}
+      {investments.length > 0 && (
+        <InvestmentFiltersComponent
+          filters={filters}
+          onFiltersChange={handleFiltersChange}
+          goals={goals}
+          accounts={accounts}
+          onReset={handleFiltersReset}
+        />
+      )}
+
+      {/* Bulk Operations */}
+      {showBulkSelection && (
+        <BulkOperations
+          selectedInvestments={selectedInvestments}
+          onSelectionChange={setSelectedInvestments}
+          onBulkDelete={handleBulkDelete}
+          onRefresh={fetchData}
+        />
+      )}
+
+      {/* Sort and Results Info */}
+      {investments.length > 0 && (
+        <div className="flex justify-between items-center mb-6">
+          <div className="text-sm text-gray-600">
+            Showing {filteredAndSortedInvestments.length} of {investments.length} investments
+          </div>
+          <InvestmentSort
+            sortOptions={sortOptions}
+            onSortChange={handleSortChange}
+          />
+        </div>
+      )}
 
       {/* Investment Cards */}
       {investments.length === 0 ? (
@@ -363,7 +499,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {investmentsWithValues.map((investmentWithValue) => (
+          {filteredAndSortedInvestments.map((investmentWithValue) => (
             <InvestmentCard
               key={investmentWithValue.investment.id}
               investmentWithValue={investmentWithValue}
@@ -371,6 +507,9 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
               onDelete={handleDelete}
               onViewDetails={handleViewDetails}
               isLoading={isSubmitting}
+              showSelection={showBulkSelection}
+              isSelected={selectedInvestments.some(inv => inv.id === investmentWithValue.investment.id)}
+              onSelectionChange={handleSelectionChange}
             />
           ))}
         </div>
@@ -411,7 +550,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       >
         <div className="space-y-4">
           <p className="text-gray-600">
-            Are you sure you want to delete "{selectedInvestment?.name}"? This action cannot be undone.
+            Are you sure you want to delete &quot;{selectedInvestment?.name}&quot;? This action cannot be undone.
           </p>
           <div className="flex justify-end space-x-3">
             <Button
@@ -457,6 +596,13 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           />
         )}
       </Modal>
+
+      {/* Export Portfolio Modal */}
+      <ExportPortfolio
+        investments={filteredAndSortedInvestments}
+        isOpen={isExportModalOpen}
+        onClose={handleExportClose}
+      />
 
       {/* Status Message */}
       {statusMessage && (
