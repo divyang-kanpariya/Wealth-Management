@@ -1,8 +1,9 @@
 import React from 'react';
+import FormError from './FormError';
 
 export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
+  error?: string | string[];
   helperText?: string;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -54,11 +55,7 @@ const Input: React.FC<InputProps> = ({
           </div>
         )}
       </div>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      <FormError error={error} />
       {helperText && !error && (
         <p className="mt-1 text-sm text-gray-500">
           {helperText}

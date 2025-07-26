@@ -1,4 +1,5 @@
 import React from 'react';
+import FormError from './FormError';
 
 export interface SelectOption {
   value: string;
@@ -8,7 +9,7 @@ export interface SelectOption {
 
 export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
-  error?: string;
+  error?: string | string[];
   helperText?: string;
   options: SelectOption[];
   placeholder?: string;
@@ -58,11 +59,7 @@ const Select: React.FC<SelectProps> = ({
           </option>
         ))}
       </select>
-      {error && (
-        <p className="mt-1 text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      <FormError error={error} />
       {helperText && !error && (
         <p className="mt-1 text-sm text-gray-500">
           {helperText}

@@ -27,6 +27,12 @@ model Investment {
 
   @@index([accountId], map: "investments_accountId_fkey")
   @@index([goalId], map: "investments_goalId_fkey")
+  @@index([type])
+  @@index([symbol])
+  @@index([createdAt])
+  @@index([buyDate])
+  @@index([accountId, type])
+  @@index([goalId, type])
   @@map("investments")
 }
 
@@ -63,6 +69,8 @@ model PriceCache {
   lastUpdated DateTime @default(now())
   source      String
 
+  @@index([lastUpdated])
+  @@index([source])
   @@map("price_cache")
 }
 
@@ -74,6 +82,8 @@ model PriceHistory {
   timestamp DateTime @default(now())
   
   @@index([symbol, timestamp])
+  @@index([symbol])
+  @@index([timestamp])
   @@map("price_history")
 }
 
