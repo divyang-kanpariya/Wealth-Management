@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCachedPrice, fetchMutualFundNAV, getMutualFundNAV, batchGetMutualFundNAVs } from '@/lib/price-fetcher'
+import { getCachedPrice, fetchMutualFundNAV, getMutualFundNAV, batchGetMutualFundNAVs, getMutualFundNAVWithFallback } from '@/lib/price-fetcher'
 import { z } from 'zod'
 
 // Validation schemas
@@ -15,7 +15,9 @@ const mutualFundQuerySchema = z.object({
   schemeCode: z.string().nullable().optional(),
   schemeCodes: z.string().nullable().optional(), // comma-separated scheme codes for batch requests
   cached: z.string().nullable().optional().transform(val => val === 'true'), // only return cached data
-  all: z.string().nullable().optional().transform(val => val === 'true') // return all mutual fund data
+  all: z.string().nullable().optional().transform(val => val === 'true'), // return all mutual fund data
+  enhanced: z.string().nullable().optional().transform(val => val === 'true'), // use enhanced fallback mechanism
+  forceRefresh: z.string().nullable().optional().transform(val => val === 'true') // force refresh even if cached
 })
 
 export async function GET(request: NextRequest) {
@@ -25,7 +27,9 @@ export async function GET(request: NextRequest) {
       schemeCode: searchParams.get('schemeCode'),
       schemeCodes: searchParams.get('schemeCodes'),
       cached: searchParams.get('cached'),
-      all: searchParams.get('all')
+      all: searchParams.get('all'),
+      enhanced: searchParams.get('enhanced'),
+      forceRefresh: searchParams.get('forceRefresh')
     })
 
     // Handle request for all mutual fund data
@@ -109,6 +113,17 @@ export async function GET(request: NextRequest) {
           nav: cached?.price || null,
           source: cached?.source || null,
           cached: true
+        })
+      } else if (query.enhanced) {
+        // Use enhanced fallback mechanism
+        const result = await getMutualFundNAVWithFallback(query.schemeCode, query.forceRefresh)
+        
+        return NextResponse.json({
+          schemeCode: query.schemeCode,
+          nav: result.nav,
+          source: result.source,
+          cached: result.cached,
+          fallbackUsed: result.fallbackUsed
         })
       } else {
         // Fetch fresh NAV data

@@ -66,6 +66,17 @@ model PriceCache {
   @@map("price_cache")
 }
 
+model PriceHistory {
+  id        String   @id @default(cuid())
+  symbol    String
+  price     Float
+  source    String
+  timestamp DateTime @default(now())
+  
+  @@index([symbol, timestamp])
+  @@map("price_history")
+}
+
 enum InvestmentType {
   STOCK
   MUTUAL_FUND
