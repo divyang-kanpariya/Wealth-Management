@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Investment, 
-  InvestmentWithCurrentValue, 
-  Goal, 
+import {
+  Investment,
+  InvestmentWithCurrentValue,
+  Goal,
   Account,
   InvestmentFilters,
   InvestmentSortOptions,
@@ -55,13 +55,13 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     field: 'buyDate',
     direction: 'desc'
   });
-  const [selectedInvestments, setSelectedInvestments] = useState<Investment[]>([]);
+  const [selectedInvestments, setSelectedInvestments] = useState<InvestmentWithCurrentValue[]>([]);
   const [showBulkSelection, setShowBulkSelection] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportHistoryModalOpen, setIsImportHistoryModalOpen] = useState(false);
   const [filteredAndSortedInvestments, setFilteredAndSortedInvestments] = useState<InvestmentWithCurrentValue[]>([]);
-  
+
 
 
   // Modal states
@@ -69,7 +69,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
-  const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   // Fetch all required data
   const fetchData = async () => {
@@ -124,7 +124,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       const stockSymbols = symbolsToFetch
         .filter(item => item.type === 'STOCK')
         .map(item => item.symbol);
-      
+
       const mutualFundSymbols = symbolsToFetch
         .filter(item => item.type === 'MUTUAL_FUND')
         .map(item => item.symbol);
@@ -228,10 +228,10 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       setIsSubmitting(true);
       setError(null);
 
-      const url = selectedInvestment 
+      const url = selectedInvestment
         ? `/api/investments/${selectedInvestment.id}`
         : '/api/investments';
-      
+
       const method = selectedInvestment ? 'PUT' : 'POST';
 
       const response = await fetch(url, {
@@ -340,7 +340,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       console.error('Failed to refresh accounts and goals:', err);
       // Continue opening the modal even if refresh fails
     }
-    
+
     setIsEditModalOpen(true);
   };
 
@@ -364,11 +364,11 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     setSortOptions(newSortOptions);
   };
 
-  const handleSelectionChange = (investment: Investment, selected: boolean) => {
+  const handleSelectionChange = (investmentWithValue: InvestmentWithCurrentValue, selected: boolean) => {
     if (selected) {
-      setSelectedInvestments(prev => [...prev, investment]);
+      setSelectedInvestments(prev => [...prev, investmentWithValue]);
     } else {
-      setSelectedInvestments(prev => prev.filter(inv => inv.id !== investment.id));
+      setSelectedInvestments(prev => prev.filter(inv => inv.investment.id !== investmentWithValue.investment.id));
     }
   };
 
@@ -414,12 +414,12 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
   };
 
   const handleImportComplete = (result: any) => {
-    setStatusMessage({ 
-      type: 'success', 
-      text: `Import completed: ${result.success} successful, ${result.failed} failed` 
+    setStatusMessage({
+      type: 'success',
+      text: `Import completed: ${result.success} successful, ${result.failed} failed`
     });
     setTimeout(() => setStatusMessage(null), 5000);
-    
+
     // Refresh data to show imported investments
     fetchData();
   };
@@ -679,8 +679,8 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       {/* Status Message */}
       {statusMessage && (
         <div className="fixed bottom-4 right-4 z-50">
-          <Alert 
-            type={statusMessage.type} 
+          <Alert
+            type={statusMessage.type}
             message={statusMessage.text}
             onClose={() => setStatusMessage(null)}
           />

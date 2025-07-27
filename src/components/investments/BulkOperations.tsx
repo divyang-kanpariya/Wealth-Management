@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Investment, BulkOperationResult } from '@/types';
+import { InvestmentWithCurrentValue, BulkOperationResult } from '@/types';
 import Button from '../ui/Button';
 import Modal from '../ui/Modal';
 import Alert from '../ui/Alert';
 
 interface BulkOperationsProps {
-  selectedInvestments: Investment[];
-  onSelectionChange: (investments: Investment[]) => void;
+  selectedInvestments: InvestmentWithCurrentValue[];
+  onSelectionChange: (investments: InvestmentWithCurrentValue[]) => void;
   onBulkDelete: (investmentIds: string[]) => Promise<BulkOperationResult>;
   onRefresh: () => void;
 }
@@ -35,11 +35,19 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
 
     try {
       setIsDeleting(true);
-      const investmentIds = selectedInvestments.map(inv => inv.id);
+      // Filter out any investments with null or undefined IDs
+      const investmentIds = selectedInvestments
+        .map(inv => inv.investment.id)
+        .filter(id => id != null && id !== '');
+
+      if (investmentIds.length === 0) {
+        throw new Error('No valid investment IDs found for deletion');
+      }
+
       const result = await onBulkDelete(investmentIds);
-      
+
       setDeleteResult(result);
-      
+
       if (result.success > 0) {
         onSelectionChange([]);
         onRefresh();
@@ -80,8 +88,8 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
   }
 
   const totalValue = selectedInvestments.reduce((sum, inv) => {
-    // Calculate approximate value (this is a simplified calculation)
-    return sum + (inv.totalValue || (inv.units && inv.buyPrice ? inv.units * inv.buyPrice : 0));
+    // Use the current value from InvestmentWithCurrentValue
+    return sum + inv.currentValue;
   }, 0);
 
   return (
@@ -97,7 +105,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                 {selectedInvestments.length} investment{selectedInvestments.length !== 1 ? 's' : ''} selected
               </span>
             </div>
-            
+
             <div className="text-sm text-gray-600">
               Total Value: ₹{totalValue.toLocaleString('en-IN')}
             </div>
@@ -111,7 +119,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
             >
               Clear Selection
             </Button>
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -126,14 +134,14 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
         {/* Selected investments preview */}
         <div className="mt-3 pt-3 border-t border-yellow-200">
           <div className="flex flex-wrap gap-2">
-            {selectedInvestments.slice(0, 5).map((investment, index) => (
+            {selectedInvestments.slice(0, 5).map((investmentWithValue, index) => (
               <span
-                key={investment.id}
+                key={investmentWithValue.investment.id}
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
               >
-                {investment.name}
+                {investmentWithValue.investment.name}
                 <button
-                  onClick={() => onSelectionChange(selectedInvestments.filter(inv => inv.id !== investment.id))}
+                  onClick={() => onSelectionChange(selectedInvestments.filter(inv => inv.investment.id !== investmentWithValue.investment.id))}
                   className="ml-1 text-blue-600 hover:text-blue-800"
                 >
                   <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -176,8 +184,8 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                   </p>
                   <div className="mt-2 max-h-32 overflow-y-auto">
                     <ul className="text-sm text-gray-700 list-disc list-inside space-y-1">
-                      {selectedInvestments.map((investment) => (
-                        <li key={investment.id}>{investment.name}</li>
+                      {selectedInvestments.map((investmentWithValue) => (
+                        <li key={investmentWithValue.investment.id}>{investmentWithValue.investment.name}</li>
                       ))}
                     </ul>
                   </div>
@@ -210,7 +218,7 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                     message={`Successfully deleted ${deleteResult.success} investment${deleteResult.success !== 1 ? 's' : ''}`}
                   />
                 )}
-                
+
                 {deleteResult.failed > 0 && (
                   <div className="bg-red-50 border border-red-200 rounded-md p-4">
                     <h4 className="text-sm font-medium text-red-800 mb-2">
