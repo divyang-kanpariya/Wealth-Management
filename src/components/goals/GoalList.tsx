@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Goal } from '@/types';
-import GoalCard from './GoalCard';
+import GoalTable from './GoalTable';
 import GoalForm from './GoalForm';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -27,6 +27,9 @@ const GoalList: React.FC<GoalListProps> = ({ className = '', onViewDetails }) =>
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
   const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  
+
+
 
   // Fetch all goals
   const fetchGoals = async () => {
@@ -187,17 +190,18 @@ const GoalList: React.FC<GoalListProps> = ({ className = '', onViewDetails }) =>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Financial Goals</h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600">
             {goals.length} goal{goals.length !== 1 ? 's' : ''}
           </p>
         </div>
-        <Button onClick={handleAddNew} disabled={isSubmitting}>
-          Add Goal
-        </Button>
+        <div className="flex items-center space-x-3">
+          <Button onClick={handleAddNew} disabled={isSubmitting}>
+            Add Goal
+          </Button>
+        </div>
       </div>
 
-      {/* Goal Cards */}
+      {/* Goal Display */}
       {goals.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
@@ -210,18 +214,13 @@ const GoalList: React.FC<GoalListProps> = ({ className = '', onViewDetails }) =>
           <Button onClick={handleAddNew}>Add Your First Goal</Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {goals.map((goal) => (
-            <GoalCard
-              key={goal.id}
-              goal={goal}
-              onEdit={() => handleEdit(goal)}
-              onDelete={() => handleDelete(goal)}
-              onViewDetails={() => handleViewDetails(goal)}
-              isLoading={isSubmitting}
-            />
-          ))}
-        </div>
+        <GoalTable
+          goals={goals}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onViewDetails={handleViewDetails}
+          isLoading={isSubmitting}
+        />
       )}
 
       {/* Edit/Add Goal Modal */}

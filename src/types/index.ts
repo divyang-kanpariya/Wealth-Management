@@ -129,3 +129,52 @@ export interface ExportOptions {
     end?: Date
   }
 }
+
+// Import functionality types
+export interface ImportValidationError {
+  row: number
+  field: string
+  message: string
+  value?: any
+}
+
+export interface ImportPreviewRow {
+  row: number
+  data: Partial<Investment>
+  errors: ImportValidationError[]
+  isValid: boolean
+}
+
+export interface ImportPreview {
+  totalRows: number
+  validRows: number
+  invalidRows: number
+  rows: ImportPreviewRow[]
+  columnMapping: Record<string, string>
+}
+
+export interface ImportResult {
+  success: number
+  failed: number
+  errors: ImportValidationError[]
+  importId: string
+}
+
+export interface ImportHistory {
+  id: string
+  filename: string
+  totalRows: number
+  successRows: number
+  failedRows: number
+  status: 'COMPLETED' | 'FAILED' | 'PARTIAL'
+  createdAt: Date
+  errors?: ImportValidationError[]
+}
+
+export interface ColumnMapping {
+  csvColumn: string
+  investmentField: string
+  required: boolean
+  dataType: 'string' | 'number' | 'date' | 'enum'
+  enumValues?: string[]
+}

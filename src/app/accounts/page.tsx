@@ -6,10 +6,7 @@ import { AccountList } from '@/components/accounts';
 
 const AccountsPage: React.FC = () => {
   return (
-    <Layout 
-      title="Accounts" 
-      subtitle="Manage your investment accounts and brokers"
-    >
+    <Layout>
       <AccountList />
     </Layout>
   );

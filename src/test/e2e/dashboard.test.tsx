@@ -95,7 +95,7 @@ describe('Dashboard E2E Workflows', () => {
           ]))
         })
 
-      const DashboardPage = (await import('@/pages')).default
+      const DashboardPage = (await import('@/app/page')).default
       render(<DashboardPage />)
 
       // Wait for all data to load
@@ -185,7 +185,7 @@ describe('Dashboard E2E Workflows', () => {
           json: () => Promise.resolve(mockExternalApis.nse.success('LOSER', 150)) // -25%
         })
 
-      const DashboardPage = (await import('@/pages')).default
+      const DashboardPage = (await import('@/app/page')).default
       render(<DashboardPage />)
 
       await waitFor(() => {
@@ -219,7 +219,7 @@ describe('Dashboard E2E Workflows', () => {
         json: () => Promise.resolve(mockExternalApis.nse.success('RELIANCE', 2500))
       })
 
-      const DashboardPage = (await import('@/pages')).default
+      const DashboardPage = (await import('@/app/page')).default
       render(<DashboardPage />)
 
       await waitFor(() => {
@@ -235,17 +235,17 @@ describe('Dashboard E2E Workflows', () => {
       expect(viewInvestmentsButton).toBeInTheDocument()
 
       // Test goal detail navigation
-      const goalCard = screen.getByText(goals[0].name)
-      await userEvent.click(goalCard)
+      const goalElement = screen.getByText(goals[0].name)
+      await userEvent.click(goalElement)
       
       // Verify goal details are shown or navigation occurs
-      expect(goalCard).toBeInTheDocument()
+      expect(goalElement).toBeInTheDocument()
 
       // Test account detail navigation
-      const accountCard = screen.getByText(accounts[0].name)
-      await userEvent.click(accountCard)
+      const accountElement = screen.getByText(accounts[0].name)
+      await userEvent.click(accountElement)
       
-      expect(accountCard).toBeInTheDocument()
+      expect(accountElement).toBeInTheDocument()
     })
 
     it('should refresh data when refresh button is clicked', async () => {
@@ -257,7 +257,7 @@ describe('Dashboard E2E Workflows', () => {
         json: () => Promise.resolve(mockExternalApis.nse.success('RELIANCE', 2500))
       })
 
-      const DashboardPage = (await import('@/pages')).default
+      const DashboardPage = (await import('@/app/page')).default
       render(<DashboardPage />)
 
       await waitFor(() => {
@@ -294,7 +294,7 @@ describe('Dashboard E2E Workflows', () => {
       // Mock API failure
       mockFetch.mockRejectedValueOnce(new Error('Price API unavailable'))
 
-      const DashboardPage = (await import('@/pages')).default
+      const DashboardPage = (await import('@/app/page')).default
       render(<DashboardPage />)
 
       await waitFor(() => {
@@ -320,7 +320,7 @@ describe('Dashboard E2E Workflows', () => {
 
     it('should handle empty portfolio state', async () => {
       // No investments created
-      const DashboardPage = (await import('@/pages')).default
+      const DashboardPage = (await import('@/app/page')).default
       render(<DashboardPage />)
 
       await waitFor(() => {
@@ -365,7 +365,7 @@ describe('Dashboard E2E Workflows', () => {
 
       const startTime = performance.now()
       
-      const DashboardPage = (await import('@/pages')).default
+      const DashboardPage = (await import('@/app/page')).default
       render(<DashboardPage />)
 
       await waitFor(() => {

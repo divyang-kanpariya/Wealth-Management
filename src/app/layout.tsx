@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import ErrorBoundary from '../components/ErrorBoundary'
@@ -14,7 +14,11 @@ export const metadata: Metadata = {
   description: 'Track your investments, manage financial goals, and monitor portfolio performance',
   keywords: ['investment', 'portfolio', 'wealth management', 'financial goals', 'stocks', 'mutual funds'],
   authors: [{ name: 'Personal Wealth Management' }],
-  viewport: 'width=device-width, initial-scale=1',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({

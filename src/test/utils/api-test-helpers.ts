@@ -1,11 +1,12 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 import { createMocks } from 'node-mocks-http'
+import { expect } from 'vitest'
 
 // API testing utilities
 export class ApiTestHelpers {
   static createMockRequest(method: string, body?: any, query?: any): NextApiRequest {
     const { req } = createMocks({
-      method,
+      method: method as any,
       body,
       query,
       headers: {
@@ -33,7 +34,7 @@ export class ApiTestHelpers {
     
     return {
       status: res.statusCode,
-      data: res._getJSONData(),
+      data: (res as any)._getJSONData(),
       headers: res.getHeaders()
     }
   }

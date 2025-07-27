@@ -1,4 +1,4 @@
-export { default as GoalCard } from './GoalCard';
+
 export { default as GoalDetails } from './GoalDetails';
 export { default as GoalForm } from './GoalForm';
 export { default as GoalList } from './GoalList';

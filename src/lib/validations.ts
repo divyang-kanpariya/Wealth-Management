@@ -94,3 +94,88 @@ export function validateUpdateGoal(data: unknown) {
 export function validateUpdateAccount(data: unknown) {
   return updateAccountSchema.parse(data)
 }
+
+// Import validation schemas
+export const csvImportSchema = z.object({
+  type: z.string().refine((val) => Object.values(InvestmentType).includes(val as InvestmentType), {
+    message: 'Invalid investment type'
+  }),
+  name: z.string().min(1, 'Investment name is required'),
+  symbol: z.string().optional(),
+  units: z.string().optional().transform((val) => val ? parseFloat(val) : undefined),
+  buyPrice: z.string().optional().transform((val) => val ? parseFloat(val) : undefined),
+  totalValue: z.string().optional().transform((val) => val ? parseFloat(val) : undefined),
+  buyDate: z.string().transform((val) => {
+    // Handle various date formats
+    const trimmedVal = val.trim();
+    if (!trimmedVal) {
+      throw new Error('Buy date is required');
+    }
+    
+    // Check if this looks like a large number (likely totalValue misplaced)
+    if (/^\d{6,}$/.test(trimmedVal)) {
+      throw new Error(`Invalid date format: "${trimmedVal}" appears to be a large number. Check if your CSV columns are properly aligned.`);
+    }
+    
+    // Try different date formats
+    let date: Date;
+    
+    // Try ISO format first (YYYY-MM-DD)
+    if (/^\d{4}-\d{2}-\d{2}$/.test(trimmedVal)) {
+      date = new Date(trimmedVal + 'T00:00:00.000Z');
+    }
+    // Try DD/MM/YYYY format
+    else if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(trimmedVal)) {
+      const [day, month, year] = trimmedVal.split('/');
+      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    // Try DD-MM-YYYY format  
+    else if (/^\d{1,2}-\d{1,2}-\d{4}$/.test(trimmedVal)) {
+      const [day, month, year] = trimmedVal.split('-');
+      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    // Try YYYY/MM/DD format
+    else if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(trimmedVal)) {
+      const [year, month, day] = trimmedVal.split('/');
+      date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    }
+    // Default to Date constructor
+    else {
+      date = new Date(trimmedVal);
+    }
+    
+    if (isNaN(date.getTime())) {
+      throw new Error(`Invalid date format: "${trimmedVal}". Please use YYYY-MM-DD, DD/MM/YYYY, or MM/DD/YYYY format`);
+    }
+    
+    return date;
+  }),
+  goalName: z.string().optional(),
+  accountName: z.string().min(1, 'Account name is required'),
+  notes: z.string().optional(),
+}).refine((data) => {
+  const type = data.type as InvestmentType;
+  // For unit-based investments, require units and buyPrice
+  if (['STOCK', 'MUTUAL_FUND', 'CRYPTO'].includes(type)) {
+    return data.units && data.buyPrice;
+  }
+  // For total value investments, require totalValue
+  if (['REAL_ESTATE', 'JEWELRY', 'GOLD', 'FD', 'OTHER'].includes(type)) {
+    return data.totalValue;
+  }
+  return true;
+}, {
+  message: 'Invalid investment data for the selected type',
+});
+
+export const columnMappingSchema = z.object({
+  csvColumn: z.string(),
+  investmentField: z.string(),
+  required: z.boolean(),
+  dataType: z.enum(['string', 'number', 'date', 'enum']),
+  enumValues: z.array(z.string()).optional(),
+});
+
+export function validateCsvImportRow(data: unknown) {
+  return csvImportSchema.parse(data);
+}

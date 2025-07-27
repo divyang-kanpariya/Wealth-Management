@@ -6,10 +6,7 @@ import Layout from '@/components/layout/Layout'
 
 export default function InvestmentsPage() {
   return (
-    <Layout 
-      title="Investments" 
-      subtitle="Manage your investment portfolio"
-    >
+    <Layout>
       <InvestmentList />
     </Layout>
   )

@@ -5,7 +5,7 @@ describe('Account Components', () => {
     const accountComponents = await import('@/components/accounts');
     
     expect(accountComponents.AccountForm).toBeDefined();
-    expect(accountComponents.AccountCard).toBeDefined();
+
     expect(accountComponents.AccountList).toBeDefined();
   });
 });

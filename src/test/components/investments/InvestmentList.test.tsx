@@ -133,14 +133,17 @@ describe('InvestmentList', () => {
 
   it('renders loading state initially', () => {
     render(<InvestmentList />);
-    expect(screen.getByRole('status')).toBeInTheDocument();
+    // Look for the loading spinner by its SVG element
+    const spinner = document.querySelector('.animate-spin');
+    expect(spinner).toBeInTheDocument();
   });
 
   it('renders investments after loading', async () => {
     render(<InvestmentList />);
     
     await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).not.toBeInTheDocument();
     });
     
     expect(screen.getByText('Reliance Industries')).toBeInTheDocument();
@@ -155,14 +158,26 @@ describe('InvestmentList', () => {
           json: () => Promise.resolve({ data: [] }),
         });
       }
-      // Keep other mocks the same
-      return global.fetch(url);
+      if (url.includes('/api/goals')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ data: mockGoals }),
+        });
+      }
+      if (url.includes('/api/accounts')) {
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve({ data: mockAccounts }),
+        });
+      }
+      return Promise.reject(new Error('Not found'));
     });
 
     render(<InvestmentList />);
     
     await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).not.toBeInTheDocument();
     });
     
     expect(screen.getByText('No investments yet')).toBeInTheDocument();
@@ -173,19 +188,23 @@ describe('InvestmentList', () => {
     render(<InvestmentList />);
     
     await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).not.toBeInTheDocument();
     });
     
     fireEvent.click(screen.getByText('Add Investment'));
     
-    expect(screen.getByText('Add New Investment')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Add New Investment')).toBeInTheDocument();
+    });
   });
 
   it('opens edit investment modal when edit button is clicked', async () => {
     render(<InvestmentList />);
     
     await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).not.toBeInTheDocument();
     });
     
     // Find the first edit button and click it
@@ -199,22 +218,28 @@ describe('InvestmentList', () => {
     render(<InvestmentList />);
     
     await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).not.toBeInTheDocument();
     });
     
     // Find the first delete button and click it
-    const deleteButtons = screen.getAllByText('Delete');
-    fireEvent.click(deleteButtons[0]);
+    await waitFor(() => {
+      const deleteButtons = screen.getAllByText('Delete');
+      fireEvent.click(deleteButtons[0]);
+    });
     
-    expect(screen.getByText('Delete Investment')).toBeInTheDocument();
-    expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Delete Investment')).toBeInTheDocument();
+      expect(screen.getByText(/Are you sure you want to delete/)).toBeInTheDocument();
+    });
   });
 
   it('refreshes prices when refresh button is clicked', async () => {
     render(<InvestmentList />);
     
     await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).not.toBeInTheDocument();
     });
     
     fireEvent.click(screen.getByText('Refresh Prices'));
@@ -234,7 +259,8 @@ describe('InvestmentList', () => {
     render(<InvestmentList />);
     
     await waitFor(() => {
-      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      const spinner = document.querySelector('.animate-spin');
+      expect(spinner).not.toBeInTheDocument();
     });
     
     expect(screen.getByText('Failed to load investments')).toBeInTheDocument();

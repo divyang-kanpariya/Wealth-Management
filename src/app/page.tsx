@@ -40,7 +40,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <Layout title="Dashboard" showBreadcrumbs={false}>
+      <Layout showBreadcrumbs={false}>
         <LoadingState message="Loading dashboard..." />
       </Layout>
     )
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <Layout title="Dashboard" showBreadcrumbs={false}>
+      <Layout showBreadcrumbs={false}>
         <ErrorState 
           message={error}
           onRetry={fetchDashboardData}
@@ -59,7 +59,7 @@ export default function Dashboard() {
 
   if (!dashboardData) {
     return (
-      <Layout title="Dashboard" showBreadcrumbs={false}>
+      <Layout showBreadcrumbs={false}>
         <div className="flex items-center justify-center py-12">
           <div className="text-center">
             <h1 className="text-2xl font-semibold text-gray-900 mb-4">No Data Available</h1>
@@ -77,11 +77,7 @@ export default function Dashboard() {
   }
 
   return (
-    <Layout 
-      title="Dashboard" 
-      subtitle="Overview of your investment portfolio and financial goals"
-      showBreadcrumbs={false}
-    >
+    <Layout showBreadcrumbs={false}>
       {/* Portfolio Summary */}
       <div className="mb-8">
         <PortfolioSummary summary={dashboardData.portfolioSummary} />

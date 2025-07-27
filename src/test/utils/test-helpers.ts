@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { vi, expect } from 'vitest'
 import { TestDataFactory, TestInvestment, TestGoal, TestAccount } from '../factories'
 
 // Test database utilities

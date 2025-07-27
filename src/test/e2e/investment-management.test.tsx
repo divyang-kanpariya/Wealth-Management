@@ -45,7 +45,7 @@ describe('Investment Management E2E Workflows', () => {
       })
 
       // Step 1: Navigate to investments page and create new investment
-      const InvestmentPage = (await import('@/pages/investments')).default
+      const InvestmentPage = (await import('@/app/investments/page')).default
       render(<InvestmentPage />)
 
       // Click "Add Investment" button
@@ -118,7 +118,7 @@ describe('Investment Management E2E Workflows', () => {
       const goal = await testDb.createGoal(TestDataFactory.createGoal())
       const account = await testDb.createAccount(TestDataFactory.createAccount())
 
-      const InvestmentPage = (await import('@/pages/investments')).default
+      const InvestmentPage = (await import('@/app/investments/page')).default
       render(<InvestmentPage />)
 
       // Test Stock Investment
@@ -235,7 +235,7 @@ describe('Investment Management E2E Workflows', () => {
       // Mock API failure
       mockFetch.mockRejectedValueOnce(new Error('Network error'))
 
-      const InvestmentPage = (await import('@/pages/investments')).default
+      const InvestmentPage = (await import('@/app/investments/page')).default
       render(<InvestmentPage />)
 
       // Wait for error state
@@ -252,7 +252,7 @@ describe('Investment Management E2E Workflows', () => {
       const goal = await testDb.createGoal(TestDataFactory.createGoal())
       const account = await testDb.createAccount(TestDataFactory.createAccount())
 
-      const InvestmentPage = (await import('@/pages/investments')).default
+      const InvestmentPage = (await import('@/app/investments/page')).default
       render(<InvestmentPage />)
 
       await userEvent.click(screen.getByText('Add Investment'))

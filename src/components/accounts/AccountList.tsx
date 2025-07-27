@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Account, Investment } from '@/types';
-import AccountCard from './AccountCard';
+import AccountTable from './AccountTable';
 import AccountForm from './AccountForm';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -30,6 +30,8 @@ const AccountList: React.FC<AccountListProps> = ({ className = '', onViewDetails
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<AccountWithTotals | null>(null);
   const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
+  
+
 
   // Calculate account totals from investments
   const calculateAccountTotals = (account: Account): AccountWithTotals => {
@@ -216,17 +218,18 @@ const AccountList: React.FC<AccountListProps> = ({ className = '', onViewDetails
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Investment Accounts</h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600">
             {accounts.length} account{accounts.length !== 1 ? 's' : ''} • {totalInvestments} investment{totalInvestments !== 1 ? 's' : ''} • ₹{totalPortfolioValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })} total
           </p>
         </div>
-        <Button onClick={handleAddNew} disabled={isSubmitting}>
-          Add Account
-        </Button>
+        <div className="flex items-center space-x-3">
+          <Button onClick={handleAddNew} disabled={isSubmitting}>
+            Add Account
+          </Button>
+        </div>
       </div>
 
-      {/* Account Cards */}
+      {/* Account Display */}
       {accounts.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
@@ -239,20 +242,13 @@ const AccountList: React.FC<AccountListProps> = ({ className = '', onViewDetails
           <Button onClick={handleAddNew}>Add Your First Account</Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {accounts.map((account) => (
-            <AccountCard
-              key={account.id}
-              account={account}
-              totalValue={account.totalValue}
-              investmentCount={account.investmentCount}
-              onEdit={() => handleEdit(account)}
-              onDelete={() => handleDelete(account)}
-              onViewDetails={() => handleViewDetails(account)}
-              isLoading={isSubmitting}
-            />
-          ))}
-        </div>
+        <AccountTable
+          accounts={accounts}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onViewDetails={handleViewDetails}
+          isLoading={isSubmitting}
+        />
       )}
 
       {/* Edit/Add Account Modal */}

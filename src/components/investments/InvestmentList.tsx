@@ -10,15 +10,18 @@ import {
 } from '@/types';
 import { calculateInvestmentValue } from '@/lib/calculations';
 import { filterInvestments, sortInvestments } from '@/lib/portfolio-utils';
-import InvestmentCard from './InvestmentCard';
+import InvestmentTable from './InvestmentTable';
 import InvestmentForm from './InvestmentForm';
 import InvestmentDetails from './InvestmentDetails';
 import InvestmentFiltersComponent from './InvestmentFilters';
 import InvestmentSort from './InvestmentSort';
 import BulkOperations from './BulkOperations';
 import ExportPortfolio from './ExportPortfolio';
+import { ImportModal } from './ImportModal';
+import { ImportHistoryModal } from './ImportHistoryModal';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
+
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorState from '../ui/ErrorState';
 import Alert from '../ui/Alert';
@@ -55,7 +58,11 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
   const [selectedInvestments, setSelectedInvestments] = useState<Investment[]>([]);
   const [showBulkSelection, setShowBulkSelection] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isImportHistoryModalOpen, setIsImportHistoryModalOpen] = useState(false);
   const [filteredAndSortedInvestments, setFilteredAndSortedInvestments] = useState<InvestmentWithCurrentValue[]>([]);
+  
+
 
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -397,6 +404,34 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     setIsExportModalOpen(false);
   };
 
+  // Import handlers
+  const handleImportOpen = () => {
+    setIsImportModalOpen(true);
+  };
+
+  const handleImportClose = () => {
+    setIsImportModalOpen(false);
+  };
+
+  const handleImportComplete = (result: any) => {
+    setStatusMessage({ 
+      type: 'success', 
+      text: `Import completed: ${result.success} successful, ${result.failed} failed` 
+    });
+    setTimeout(() => setStatusMessage(null), 5000);
+    
+    // Refresh data to show imported investments
+    fetchData();
+  };
+
+  const handleImportHistoryOpen = () => {
+    setIsImportHistoryModalOpen(true);
+  };
+
+  const handleImportHistoryClose = () => {
+    setIsImportHistoryModalOpen(false);
+  };
+
   if (isLoading) {
     return (
       <div className={`flex justify-center items-center py-12 ${className}`}>
@@ -422,8 +457,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">My Investments</h2>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600">
             {filteredAndSortedInvestments.length} of {investments.length} investment{investments.length !== 1 ? 's' : ''}
             {lastPriceUpdate && (
               <span className="ml-2 text-sm">
@@ -432,7 +466,21 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
             )}
           </p>
         </div>
-        <div className="flex space-x-3">
+        <div className="flex items-center space-x-3">
+          <Button
+            variant="outline"
+            onClick={handleImportOpen}
+            disabled={isSubmitting}
+          >
+            Import
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleImportHistoryOpen}
+            disabled={isSubmitting}
+          >
+            Import History
+          </Button>
           <Button
             variant="outline"
             onClick={handleExportOpen}
@@ -487,14 +535,16 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           <div className="text-sm text-gray-600">
             Showing {filteredAndSortedInvestments.length} of {investments.length} investments
           </div>
-          <InvestmentSort
-            sortOptions={sortOptions}
-            onSortChange={handleSortChange}
-          />
+          <div className="flex items-center space-x-4">
+            <InvestmentSort
+              sortOptions={sortOptions}
+              onSortChange={handleSortChange}
+            />
+          </div>
         </div>
       )}
 
-      {/* Investment Cards */}
+      {/* Investment Display */}
       {investments.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-4">
@@ -507,21 +557,21 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           <Button onClick={handleAddNew}>Add Your First Investment</Button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredAndSortedInvestments.map((investmentWithValue) => (
-            <InvestmentCard
-              key={investmentWithValue.investment.id}
-              investmentWithValue={investmentWithValue}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onViewDetails={handleViewDetails}
-              isLoading={isSubmitting}
-              showSelection={showBulkSelection}
-              isSelected={selectedInvestments.some(inv => inv.id === investmentWithValue.investment.id)}
-              onSelectionChange={handleSelectionChange}
-            />
-          ))}
-        </div>
+        <InvestmentTable
+          investments={filteredAndSortedInvestments}
+          goals={goals}
+          accounts={accounts}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+          onViewDetails={handleViewDetails}
+          isLoading={isSubmitting}
+          showSelection={showBulkSelection}
+          selectedInvestments={selectedInvestments}
+          onSelectionChange={handleSelectionChange}
+          onSort={(key, direction) => handleSortChange({ field: key as any, direction })}
+          sortKey={sortOptions.field}
+          sortDirection={sortOptions.direction}
+        />
       )}
 
       {/* Edit/Add Investment Modal */}
@@ -611,6 +661,19 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         investments={filteredAndSortedInvestments}
         isOpen={isExportModalOpen}
         onClose={handleExportClose}
+      />
+
+      {/* Import Modal */}
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={handleImportClose}
+        onImportComplete={handleImportComplete}
+      />
+
+      {/* Import History Modal */}
+      <ImportHistoryModal
+        isOpen={isImportHistoryModalOpen}
+        onClose={handleImportHistoryClose}
       />
 
       {/* Status Message */}

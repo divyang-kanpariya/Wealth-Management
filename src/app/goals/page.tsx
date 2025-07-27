@@ -6,10 +6,7 @@ import { GoalList } from '@/components/goals';
 
 export default function GoalsPage() {
   return (
-    <Layout 
-      title="Financial Goals" 
-      subtitle="Manage your financial goals and track progress towards them"
-    >
+    <Layout>
       <GoalList />
     </Layout>
   );
