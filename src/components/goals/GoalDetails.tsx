@@ -10,6 +10,8 @@ import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorState from '../ui/ErrorState';
 import Modal from '../ui/Modal';
 import Alert from '../ui/Alert';
+import CompactCard from '../ui/CompactCard';
+import DataGrid from '../ui/DataGrid';
 
 interface GoalDetailsProps {
   goalId: string;
@@ -230,25 +232,20 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ goalId, onBack }) => {
   const priorityInfo = getPriorityLabel(goal.priority || 3);
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center">
+      <CompactCard 
+        title={goal.name}
+        badge={`${priorityInfo.label} Priority`}
+        actions={
+          <div className="flex space-x-2">
             <Button
               variant="outline"
               size="sm"
               onClick={onBack || (() => router.push('/goals'))}
-              className="mr-4"
             >
               Back
             </Button>
-            <h1 className="text-xl font-semibold text-gray-900">{goal.name}</h1>
-            <span className={`ml-3 text-xs px-2 py-1 rounded-full ${priorityInfo.color}`}>
-              {priorityInfo.label} Priority
-            </span>
-          </div>
-          <div className="flex space-x-2">
             <Button
               variant="outline"
               onClick={() => setIsEditModalOpen(true)}
@@ -265,129 +262,127 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ goalId, onBack }) => {
               Delete
             </Button>
           </div>
-        </div>
-      </div>
+        }
+      >
+        <div></div>
+      </CompactCard>
 
-      {/* Content */}
-      <div className="p-6">
-        {/* Progress Section */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Progress</h2>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <GoalProgress
-              currentAmount={currentAmount}
-              targetAmount={goal.targetAmount}
-              percentage={percentage}
-              className="mb-4"
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="text-sm text-gray-500 mb-1">Current Amount</div>
-                <div className="text-xl font-semibold">{formatCurrency(currentAmount)}</div>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="text-sm text-gray-500 mb-1">Target Amount</div>
-                <div className="text-xl font-semibold">{formatCurrency(goal.targetAmount)}</div>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <div className="text-sm text-gray-500 mb-1">Remaining</div>
-                <div className="text-xl font-semibold">
-                  {formatCurrency(Math.max(0, goal.targetAmount - currentAmount))}
-                </div>
-              </div>
+      {/* Progress Section */}
+      <CompactCard title="Progress">
+        <GoalProgress
+          currentAmount={currentAmount}
+          targetAmount={goal.targetAmount}
+          percentage={percentage}
+          className="mb-4"
+        />
+        
+        <DataGrid
+          items={[
+            {
+              label: 'Current Amount',
+              value: formatCurrency(currentAmount),
+              color: 'info'
+            },
+            {
+              label: 'Target Amount',
+              value: formatCurrency(goal.targetAmount),
+              color: 'default'
+            },
+            {
+              label: 'Remaining',
+              value: formatCurrency(Math.max(0, goal.targetAmount - currentAmount)),
+              color: 'warning'
+            }
+          ]}
+          columns={3}
+          variant="default"
+          className="mt-6"
+        />
+      </CompactCard>
+
+      {/* Details Section */}
+      <CompactCard title="Goal Details">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="text-sm text-gray-500 mb-1">Target Date</div>
+            <div className="font-medium">{formatDate(goal.targetDate.toISOString())}</div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500 mb-1">Time Remaining</div>
+            <div className={`font-medium ${timeRemaining.isOverdue ? 'text-red-600' : ''}`}>
+              {timeRemaining.text}
             </div>
           </div>
-        </div>
-
-        {/* Details Section */}
-        <div className="mb-8">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Goal Details</h2>
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Target Date</div>
-                <div className="font-medium">{formatDate(goal.targetDate.toISOString())}</div>
-              </div>
-              <div>
-                <div className="text-sm text-gray-500 mb-1">Time Remaining</div>
-                <div className={`font-medium ${timeRemaining.isOverdue ? 'text-red-600' : ''}`}>
-                  {timeRemaining.text}
-                </div>
-              </div>
-              {goal.description && (
-                <div className="col-span-2">
-                  <div className="text-sm text-gray-500 mb-1">Description</div>
-                  <div className="font-medium">{goal.description}</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Linked Investments Section */}
-        <div>
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Linked Investments</h2>
-          {goal.investments && goal.investments.length > 0 ? (
-            <div className="bg-gray-50 p-4 rounded-lg overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {goal.investments.map((investment: Investment) => (
-                    <tr key={investment.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{investment.name}</div>
-                        {investment.symbol && (
-                          <div className="text-xs text-gray-500">{investment.symbol}</div>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                          {investment.type}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
-                        {investment.totalValue ? (
-                          formatCurrency(investment.totalValue)
-                        ) : investment.units && investment.buyPrice ? (
-                          formatCurrency(investment.units * investment.buyPrice)
-                        ) : (
-                          'N/A'
-                        )}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
-                        {investment.account?.name || 'N/A'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="bg-gray-50 p-6 rounded-lg text-center">
-              <div className="text-gray-400 mb-2">
-                <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <p className="text-gray-600 mb-4">No investments are linked to this goal yet.</p>
-              <Button
-                variant="outline"
-                onClick={() => router.push('/investments')}
-              >
-                Add Investments
-              </Button>
+          {goal.description && (
+            <div className="col-span-2">
+              <div className="text-sm text-gray-500 mb-1">Description</div>
+              <div className="font-medium">{goal.description}</div>
             </div>
           )}
         </div>
-      </div>
+      </CompactCard>
+
+      {/* Linked Investments Section */}
+      <CompactCard title="Linked Investments">
+        {goal.investments && goal.investments.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Value</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Account</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {goal.investments.map((investment: Investment) => (
+                  <tr key={investment.id} className="hover:bg-gray-50">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className="font-medium text-gray-900">{investment.name}</div>
+                      {investment.symbol && (
+                        <div className="text-xs text-gray-500">{investment.symbol}</div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+                        {investment.type}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      {investment.totalValue ? (
+                        formatCurrency(investment.totalValue)
+                      ) : investment.units && investment.buyPrice ? (
+                        formatCurrency(investment.units * investment.buyPrice)
+                      ) : (
+                        'N/A'
+                      )}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-right">
+                      {investment.account?.name || 'N/A'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <div className="text-gray-400 mb-2">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <p className="text-gray-600 mb-4">No investments are linked to this goal yet.</p>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/investments')}
+            >
+              Add Investments
+            </Button>
+          </div>
+        )}
+      </CompactCard>
 
       {/* Edit Goal Modal */}
       <Modal

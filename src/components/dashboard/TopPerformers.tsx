@@ -3,6 +3,7 @@
 import React from 'react'
 import { InvestmentWithCurrentValue } from '@/types'
 import Link from 'next/link'
+import CompactCard from '../ui/CompactCard'
 
 interface TopPerformersProps {
   investments: InvestmentWithCurrentValue[]
@@ -89,17 +90,17 @@ export default function TopPerformers({ investments }: TopPerformersProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Top Gainers/Losers by Amount */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Top Performers (Amount)</h3>
+      <CompactCard 
+        title="Top Performers (Amount)"
+        actions={
           <Link 
             href="/investments" 
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
           >
             View All
           </Link>
-        </div>
-        
+        }
+      >
         {/* Top Gainers */}
         {topGainers.length > 0 && (
           <div className="mb-6">
@@ -141,20 +142,20 @@ export default function TopPerformers({ investments }: TopPerformersProps) {
             No performance data available
           </div>
         )}
-      </div>
+      </CompactCard>
 
       {/* Best/Worst Performers by Percentage */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-800">Top Performers (%)</h3>
+      <CompactCard 
+        title="Top Performers (%)"
+        actions={
           <Link 
             href="/investments" 
             className="text-sm text-blue-600 hover:text-blue-800 font-medium"
           >
             View All
           </Link>
-        </div>
-        
+        }
+      >
         {/* Best Performers */}
         {bestPerformers.length > 0 && (
           <div className="mb-6">
@@ -198,7 +199,7 @@ export default function TopPerformers({ investments }: TopPerformersProps) {
             No performance data available
           </div>
         )}
-      </div>
+      </CompactCard>
     </div>
   )
 }

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Button from '../ui/Button';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorState from '../ui/ErrorState';
+import CompactCard from '../ui/CompactCard';
 
 const InvestmentListDebug: React.FC = () => {
   const [investments, setInvestments] = useState<any[]>([]);
@@ -189,10 +190,10 @@ const InvestmentListDebug: React.FC = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {investments.map((investment, index) => (
-              <div key={investment.id || index} className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {investment.name || 'Unnamed Investment'}
-                </h3>
+              <CompactCard 
+                key={investment.id || index}
+                title={investment.name || 'Unnamed Investment'}
+              >
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="text-gray-600">Type:</span>
@@ -241,7 +242,7 @@ const InvestmentListDebug: React.FC = () => {
                     </div>
                   )}
                 </div>
-              </div>
+              </CompactCard>
             ))}
           </div>
         )}

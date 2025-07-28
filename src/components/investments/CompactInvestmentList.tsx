@@ -339,6 +339,20 @@ const CompactInvestmentList: React.FC<CompactInvestmentListProps> = ({ className
     }
   ];
 
+  const handleRefreshPrices = () => {
+    fetchPrices(investments);
+    setStatusMessage({ type: 'success', text: 'Refreshing prices...' });
+    setTimeout(() => setStatusMessage(null), 3000);
+  };
+
+  const handleImportOpen = () => {
+    setIsImportModalOpen(true);
+  };
+
+  const handleExportOpen = () => {
+    setIsExportModalOpen(true);
+  };
+
   // Quick actions
   const quickActions: QuickAction[] = [
     {
@@ -498,12 +512,6 @@ const CompactInvestmentList: React.FC<CompactInvestmentListProps> = ({ className
     setIsEditModalOpen(true);
   }
 
-  const handleRefreshPrices = () => {
-    fetchPrices(investments);
-    setStatusMessage({ type: 'success', text: 'Refreshing prices...' });
-    setTimeout(() => setStatusMessage(null), 3000);
-  };
-
   const handleFiltersChange = (newFilters: InvestmentFilters) => {
     setFilters(newFilters);
   };
@@ -548,16 +556,8 @@ const CompactInvestmentList: React.FC<CompactInvestmentListProps> = ({ className
     return result;
   };
 
-  const handleExportOpen = () => {
-    setIsExportModalOpen(true);
-  };
-
   const handleExportClose = () => {
     setIsExportModalOpen(false);
-  };
-
-  const handleImportOpen = () => {
-    setIsImportModalOpen(true);
   };
 
   const handleImportClose = () => {
@@ -736,7 +736,9 @@ const CompactInvestmentList: React.FC<CompactInvestmentListProps> = ({ className
             layout="horizontal"
           />
         }
-      />
+      >
+        <div></div>
+      </CompactCard>
 
       {/* Main Content */}
       <TabPanel

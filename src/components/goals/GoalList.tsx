@@ -213,7 +213,9 @@ const GoalList: React.FC<GoalListProps> = ({ className = '', onViewDetails }) =>
               layout="horizontal"
             />
           }
-        />
+        >
+          <div></div>
+        </CompactCard>
 
         {/* Goal Display */}
         {goals.length === 0 ? (

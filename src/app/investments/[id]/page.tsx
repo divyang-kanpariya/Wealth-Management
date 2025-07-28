@@ -69,11 +69,7 @@ export default function InvestmentDetailsPage({ params }: InvestmentDetailsPageP
   ]
 
   return (
-    <Layout 
-      title={loading ? 'Investment Details' : investment?.name || 'Investment Details'}
-      subtitle="View and manage investment details"
-      breadcrumbs={breadcrumbs}
-    >
+    <Layout>
       <InvestmentDetails
         investmentId={investmentId}
         onBack={handleBack}

@@ -2,6 +2,7 @@
 
 import React from 'react'
 import { PortfolioSummary } from '@/types'
+import CompactCard from '../ui/CompactCard'
 
 interface AssetAllocationProps {
   assetAllocation: PortfolioSummary['assetAllocation']
@@ -49,9 +50,7 @@ export default function AssetAllocation({ assetAllocation, accountDistribution }
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Asset Allocation */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Asset Allocation</h3>
-        
+      <CompactCard title="Asset Allocation">
         {Object.keys(assetAllocation).length === 0 ? (
           <div className="text-gray-500 text-center py-8">
             No investments found
@@ -80,12 +79,10 @@ export default function AssetAllocation({ assetAllocation, accountDistribution }
               ))}
           </div>
         )}
-      </div>
+      </CompactCard>
 
       {/* Account Distribution */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Account Distribution</h3>
-        
+      <CompactCard title="Account Distribution">
         {Object.keys(accountDistribution).length === 0 ? (
           <div className="text-gray-500 text-center py-8">
             No accounts found
@@ -121,7 +118,7 @@ export default function AssetAllocation({ assetAllocation, accountDistribution }
               ))}
           </div>
         )}
-      </div>
+      </CompactCard>
     </div>
   )
 }

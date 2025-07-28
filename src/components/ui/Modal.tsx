@@ -1,12 +1,26 @@
 import React, { useEffect } from 'react';
 
+/**
+ * Modal component for displaying content in an overlay
+ * Follows the design system patterns with consistent styling and behavior
+ */
 export interface ModalProps {
+  /** Controls whether the modal is visible */
   isOpen: boolean;
+  /** Callback function called when modal should be closed */
   onClose: () => void;
+  /** Optional title displayed in the modal header */
   title?: string;
+  /** Content to be displayed in the modal body */
   children: React.ReactNode;
+  /** Size variant of the modal */
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** Whether to show the close button in the header */
   showCloseButton?: boolean;
+  /** Visual variant of the modal */
+  variant?: 'default' | 'compact';
+  /** Additional CSS classes */
+  className?: string;
 }
 
 const Modal: React.FC<ModalProps> = ({
@@ -15,7 +29,9 @@ const Modal: React.FC<ModalProps> = ({
   title,
   children,
   size = 'md',
-  showCloseButton = true
+  showCloseButton = true,
+  variant = 'default',
+  className = ''
 }) => {
   // Handle escape key
   useEffect(() => {
@@ -45,6 +61,19 @@ const Modal: React.FC<ModalProps> = ({
     xl: 'max-w-4xl'
   };
 
+  const variantClasses = {
+    default: {
+      modal: 'bg-white rounded-lg shadow-xl',
+      header: 'p-6 border-b border-gray-200',
+      content: 'p-6'
+    },
+    compact: {
+      modal: 'bg-white rounded-lg shadow-xl border border-gray-200',
+      header: 'p-4 border-b border-gray-100',
+      content: 'p-4'
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
@@ -55,10 +84,10 @@ const Modal: React.FC<ModalProps> = ({
         />
         
         {/* Modal */}
-        <div className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} transform transition-all`}>
+        <div className={`relative ${variantClasses[variant].modal} w-full ${sizeClasses[size]} transform transition-all ${className}`}>
           {/* Header */}
           {(title || showCloseButton) && (
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className={`flex items-center justify-between ${variantClasses[variant].header}`}>
               {title && (
                 <h3 className="text-lg font-medium text-gray-900">
                   {title}
@@ -88,7 +117,7 @@ const Modal: React.FC<ModalProps> = ({
           )}
           
           {/* Content */}
-          <div className="p-6">
+          <div className={variantClasses[variant].content}>
             {children}
           </div>
         </div>

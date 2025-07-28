@@ -5,6 +5,7 @@ import { InvestmentType } from '@prisma/client';
 import Button from '../ui/Button';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorState from '../ui/ErrorState';
+import CompactCard from '../ui/CompactCard';
 
 interface InvestmentDetailsProps {
   investmentId: string;
@@ -241,8 +242,7 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
           </div>
 
           {/* Investment Information */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Investment Information</h2>
+          <CompactCard title="Investment Information">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {isUnitBased ? (
                 <>
@@ -291,22 +291,20 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                 </p>
               </div>
             </div>
-          </div>
+          </CompactCard>
 
           {/* Notes */}
           {investment.notes && (
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Notes</h2>
+            <CompactCard title="Notes">
               <p className="text-gray-700 whitespace-pre-wrap">{investment.notes}</p>
-            </div>
+            </CompactCard>
           )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Goal Information */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Linked Goal</h3>
+          <CompactCard title="Linked Goal">
             <div>
               <p className="font-medium text-gray-900">
                 {investment.goal?.name || 'Unknown Goal'}
@@ -333,11 +331,10 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                 </div>
               )}
             </div>
-          </div>
+          </CompactCard>
 
           {/* Account Information */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account/Platform</h3>
+          <CompactCard title="Account/Platform">
             <div>
               <p className="font-medium text-gray-900">
                 {investment.account?.name || 'Unknown Account'}
@@ -351,12 +348,11 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                 </p>
               )}
             </div>
-          </div>
+          </CompactCard>
 
           {/* Price Status */}
           {isUnitBased && (
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Price Status</h3>
+            <CompactCard title="Price Status">
               <div className="space-y-2">
                 {currentPrice ? (
                   <div className="flex items-center text-green-600">
@@ -379,7 +375,7 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                   </p>
                 )}
               </div>
-            </div>
+            </CompactCard>
           )}
         </div>
       </div>

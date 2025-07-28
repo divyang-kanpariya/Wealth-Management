@@ -47,7 +47,7 @@ function Table<T>({
 
   const handleSort = (key: string) => {
     if (!onSort) return;
-    
+
     const newDirection = sortKey === key && sortDirection === 'asc' ? 'desc' : 'asc';
     onSort(key, newDirection);
   };
@@ -70,7 +70,7 @@ function Table<T>({
         </svg>
       );
     }
-    
+
     return sortDirection === 'asc' ? (
       <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -136,9 +136,8 @@ function Table<T>({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                    column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
-                  } ${column.className || ''} ${column.mobileHidden ? 'hidden md:table-cell' : ''}`}
+                  className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
+                    } ${column.className || ''} ${column.mobileHidden ? 'hidden md:table-cell' : ''}`}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
@@ -161,9 +160,8 @@ function Table<T>({
               return (
                 <tr
                   key={key}
-                  className={`${
-                    onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''
-                  } ${hoveredRow === key ? 'bg-gray-50' : ''} transition-colors`}
+                  className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''
+                    } ${hoveredRow === key ? 'bg-gray-50' : ''} transition-colors`}
                   onMouseEnter={() => setHoveredRow(key)}
                   onMouseLeave={() => setHoveredRow(null)}
                   onClick={() => onRowClick && onRowClick(item)}

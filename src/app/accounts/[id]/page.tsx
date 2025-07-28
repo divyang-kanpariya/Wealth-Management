@@ -6,6 +6,8 @@ import Layout from '@/components/layout/Layout';
 import { Account, Investment } from '@/types';
 import { Button, LoadingSpinner, ErrorState, Modal, Alert, BreadcrumbItem } from '@/components/ui';
 import { AccountForm } from '@/components/accounts';
+import CompactCard from '@/components/ui/CompactCard';
+import DataGrid from '@/components/ui/DataGrid';
 
 interface AccountWithInvestments extends Account {
   totalValue: number;
@@ -175,11 +177,7 @@ const AccountDetailsPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <Layout 
-        title="Account Details"
-        subtitle="Loading account information..."
-        breadcrumbs={breadcrumbs}
-      >
+      <Layout>
         <div className="flex justify-center items-center py-12">
           <LoadingSpinner size="lg" />
         </div>
@@ -189,11 +187,7 @@ const AccountDetailsPage: React.FC = () => {
 
   if (error) {
     return (
-      <Layout 
-        title="Account Details"
-        subtitle="Failed to load account"
-        breadcrumbs={breadcrumbs}
-      >
+      <Layout>
         <ErrorState
           title="Failed to load account"
           message={error}
@@ -205,11 +199,7 @@ const AccountDetailsPage: React.FC = () => {
 
   if (!account) {
     return (
-      <Layout 
-        title="Account Details"
-        subtitle="Account not found"
-        breadcrumbs={breadcrumbs}
-      >
+      <Layout>
         <ErrorState
           title="Account not found"
           message="The requested account could not be found."
@@ -221,11 +211,7 @@ const AccountDetailsPage: React.FC = () => {
   }
 
   return (
-    <Layout 
-      title={account.name}
-      subtitle="Manage account details and view linked investments"
-      breadcrumbs={breadcrumbs}
-    >
+    <Layout>
       <div>
         {/* Header */}
         <div className="flex justify-between items-start mb-8">
@@ -269,39 +255,41 @@ const AccountDetailsPage: React.FC = () => {
         </div>
 
         {/* Account Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Total Value</h3>
-            <p className="text-3xl font-bold text-green-600">
-              ₹{account.totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Investments</h3>
-            <p className="text-3xl font-bold text-blue-600">
-              {account.investmentCount}
-            </p>
-          </div>
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Account Type</h3>
-            <p className="text-xl font-semibold text-gray-700">
-              {getAccountTypeLabel(account.type)}
-            </p>
-          </div>
-        </div>
+        <CompactCard title="Account Summary" className="mb-8">
+          <DataGrid
+            items={[
+              {
+                label: 'Total Value',
+                value: `₹${account.totalValue.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`,
+                color: 'success'
+              },
+              {
+                label: 'Investments',
+                value: account.investmentCount.toString(),
+                color: 'info'
+              },
+              {
+                label: 'Account Type',
+                value: getAccountTypeLabel(account.type),
+                color: 'default'
+              }
+            ]}
+            columns={3}
+            variant="default"
+          />
+        </CompactCard>
 
         {/* Notes */}
         {account.notes && (
-          <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Notes</h3>
+          <CompactCard title="Notes" className="mb-8">
             <p className="text-gray-700">{account.notes}</p>
-          </div>
+          </CompactCard>
         )}
 
         {/* Investments */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">Investments</h3>
+        <CompactCard 
+          title="Investments"
+          actions={
             <Button
               variant="outline"
               size="sm"
@@ -309,7 +297,8 @@ const AccountDetailsPage: React.FC = () => {
             >
               Manage Investments
             </Button>
-          </div>
+          }
+        >
 
           {account.investments && account.investments.length > 0 ? (
             <div className="space-y-4">
@@ -365,7 +354,7 @@ const AccountDetailsPage: React.FC = () => {
               </Button>
             </div>
           )}
-        </div>
+        </CompactCard>
 
         {/* Edit Account Modal */}
         <Modal

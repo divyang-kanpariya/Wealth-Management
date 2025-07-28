@@ -286,7 +286,9 @@ const AccountList: React.FC<AccountListProps> = ({ className = '', onViewDetails
               layout="horizontal"
             />
           }
-        />
+        >
+          <div></div>
+        </CompactCard>
 
         {/* Summary Stats */}
         {accounts.length > 0 && (

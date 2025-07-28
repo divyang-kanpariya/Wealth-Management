@@ -3,6 +3,7 @@
 import React from 'react'
 import { GoalProgress as GoalProgressType } from '@/types'
 import Link from 'next/link'
+import CompactCard from '../ui/CompactCard'
 
 interface GoalProgressProps {
   goals: GoalProgressType[]
@@ -50,17 +51,20 @@ export default function GoalProgress({ goals }: GoalProgressProps) {
     return 'bg-red-100'
   }
 
+  const headerActions = (
+    <Link 
+      href="/goals" 
+      className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+    >
+      View All Goals
+    </Link>
+  );
+
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-800">Goal Progress</h3>
-        <Link 
-          href="/goals" 
-          className="text-sm text-blue-600 hover:text-blue-800 font-medium"
-        >
-          View All Goals
-        </Link>
-      </div>
+    <CompactCard 
+      title="Goal Progress" 
+      actions={headerActions}
+    >
       
       {goals.length === 0 ? (
         <div className="text-gray-500 text-center py-8">
@@ -134,6 +138,6 @@ export default function GoalProgress({ goals }: GoalProgressProps) {
           )}
         </div>
       )}
-    </div>
+    </CompactCard>
   )
 }

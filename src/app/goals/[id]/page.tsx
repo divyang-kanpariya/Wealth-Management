@@ -47,11 +47,7 @@ export default function GoalDetailsPage({ params }: { params: Promise<{ id: stri
   ];
 
   return (
-    <Layout 
-      title={loading ? 'Goal Details' : goal?.name || 'Goal Details'}
-      subtitle="View and manage goal details and progress"
-      breadcrumbs={breadcrumbs}
-    >
+    <Layout>
       <GoalDetails goalId={goalId} />
     </Layout>
   );

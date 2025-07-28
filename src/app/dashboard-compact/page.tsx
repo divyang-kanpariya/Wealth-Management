@@ -46,7 +46,7 @@ export default function CompactDashboard() {
 
   if (loading) {
     return (
-      <Layout showBreadcrumbs={false}>
+      <Layout>
         <LoadingState message="Loading dashboard..." />
       </Layout>
     )
@@ -54,7 +54,7 @@ export default function CompactDashboard() {
 
   if (error) {
     return (
-      <Layout showBreadcrumbs={false}>
+      <Layout>
         <ErrorState 
           message={error}
           onRetry={fetchDashboardData}
@@ -65,7 +65,7 @@ export default function CompactDashboard() {
 
   if (!dashboardData) {
     return (
-      <Layout showBreadcrumbs={false}>
+      <Layout>
         <div className="flex items-center justify-center py-12">
           <CompactCard variant="minimal" className="max-w-md">
             <div className="text-center py-6">
@@ -174,7 +174,7 @@ export default function CompactDashboard() {
   const tabs: Tab[] = [overviewTab, performanceTab, goalsTab]
 
   return (
-    <Layout showBreadcrumbs={false}>
+    <Layout>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">

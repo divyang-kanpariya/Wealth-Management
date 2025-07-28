@@ -458,6 +458,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     <div className="space-y-4">
         {/* Header Card */}
         <CompactCard
+          title="My Investments"
           badge={`${filteredAndSortedInvestments.length} of ${investments.length}`}
           subtitle={lastPriceUpdate ? `Prices updated ${lastPriceUpdate.toLocaleTimeString()}` : undefined}
           variant="default"
@@ -526,7 +527,9 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
               layout="horizontal"
             />
           }
-        />
+        >
+          <div></div>
+        </CompactCard>
 
         {/* Filters */}
         {investments.length > 0 && (

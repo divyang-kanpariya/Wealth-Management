@@ -46,7 +46,7 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <Layout showBreadcrumbs={false}>
+      <Layout>
         <LoadingState message="Loading dashboard..." />
       </Layout>
     )
@@ -54,7 +54,7 @@ export default function Dashboard() {
 
   if (error) {
     return (
-      <Layout showBreadcrumbs={false}>
+      <Layout>
         <ErrorState 
           message={error}
           onRetry={fetchDashboardData}
@@ -65,7 +65,7 @@ export default function Dashboard() {
 
   if (!dashboardData) {
     return (
-      <Layout showBreadcrumbs={false}>
+      <Layout>
         <div className="flex items-center justify-center py-12">
           <CompactCard variant="minimal" className="max-w-md">
             <div className="text-center py-6">
@@ -90,7 +90,7 @@ export default function Dashboard() {
   }
 
   return (
-    <Layout showBreadcrumbs={false}>
+    <Layout>
       <div className="space-y-4">
         {/* Portfolio Summary */}
         <CompactPortfolioSummary summary={dashboardData.portfolioSummary} />
