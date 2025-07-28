@@ -1,32 +1,12 @@
 import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
-import Header from './Header';
 import Navigation, { NavigationItem } from './Navigation';
-import { Breadcrumb, BreadcrumbItem } from '@/components/ui';
-import { getBreadcrumbsForPage } from '@/lib/breadcrumb-utils';
 
 export interface LayoutProps {
   children: React.ReactNode;
-  title?: string;
-  subtitle?: string;
-  headerActions?: React.ReactNode;
-  breadcrumbs?: BreadcrumbItem[];
-  showBreadcrumbs?: boolean;
 }
 
-const Layout: React.FC<LayoutProps> = ({
-  children,
-  title,
-  subtitle,
-  headerActions,
-  breadcrumbs,
-  showBreadcrumbs = true
-}) => {
+const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const pathname = usePathname();
-  
-  // Generate breadcrumbs if not provided
-  const finalBreadcrumbs = breadcrumbs || getBreadcrumbsForPage(pathname, title);
 
   const navigationItems: NavigationItem[] = [
     {
@@ -72,16 +52,14 @@ const Layout: React.FC<LayoutProps> = ({
     <div className="min-h-screen bg-gray-50">
       {/* Mobile menu button */}
       <div className="md:hidden">
-        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200">
-          <h1 className="text-lg font-semibold text-gray-900">
-            {title || 'Personal Wealth Management'}
-          </h1>
+        <div className="flex items-center justify-between p-3 bg-white border-b border-gray-200">
+          <div className="text-sm font-medium text-gray-900">Menu</div>
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="text-gray-500 hover:text-gray-700"
           >
             <svg
-              className="h-6 w-6"
+              className="h-5 w-5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -113,34 +91,22 @@ const Layout: React.FC<LayoutProps> = ({
         )}
       </div>
 
-      {/* Desktop layout */}
+      {/* Desktop navigation */}
       <div className="hidden md:block">
         <div className="bg-white border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
+            <div className="py-3">
               <Navigation items={navigationItems} />
-              {headerActions && (
-                <div className="flex items-center space-x-4">
-                  {headerActions}
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Header */}
-      <Header title={title} subtitle={subtitle} actions={headerActions} />
-
       {/* Main content */}
-      <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-        {/* Breadcrumbs */}
-        {showBreadcrumbs && finalBreadcrumbs.length > 1 && (
-          <div className="mb-6">
-            <Breadcrumb items={finalBreadcrumbs} />
-          </div>
-        )}
-        {children}
+      <main className="p-4">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
       </main>
     </div>
   );

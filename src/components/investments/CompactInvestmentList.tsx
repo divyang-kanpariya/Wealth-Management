@@ -10,7 +10,6 @@ import {
 } from '@/types';
 import { calculateInvestmentValue } from '@/lib/calculations';
 import { filterInvestments, sortInvestments } from '@/lib/portfolio-utils';
-import InvestmentTable from './InvestmentTable';
 import InvestmentForm from './InvestmentForm';
 import InvestmentDetails from './InvestmentDetails';
 import InvestmentFiltersComponent from './InvestmentFilters';
@@ -19,16 +18,24 @@ import BulkOperations from './BulkOperations';
 import ExportPortfolio from './ExportPortfolio';
 import { ImportModal } from './ImportModal';
 import { ImportHistoryModal } from './ImportHistoryModal';
-import Modal from '../ui/Modal';
-import Button from '../ui/Button';
-import { CompactCard, QuickActions } from '../ui';
-
+import { 
+  CompactCard, 
+  CompactTable, 
+  CompactTableColumn, 
+  Modal, 
+  Button, 
+  StatusIndicator,
+  QuickActions,
+  QuickAction,
+  TabPanel,
+  Tab
+} from '../ui';
 
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorState from '../ui/ErrorState';
 import Alert from '../ui/Alert';
 
-interface InvestmentListProps {
+interface CompactInvestmentListProps {
   className?: string;
   onViewDetails?: (investmentId: string) => void;
 }
@@ -40,7 +47,7 @@ interface PriceData {
   cached: boolean;
 }
 
-const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewDetails }) => {
+const CompactInvestmentList: React.FC<CompactInvestmentListProps> = ({ className = '', onViewDetails }) => {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [investmentsWithValues, setInvestmentsWithValues] = useState<InvestmentWithCurrentValue[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
@@ -63,8 +70,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [isImportHistoryModalOpen, setIsImportHistoryModalOpen] = useState(false);
   const [filteredAndSortedInvestments, setFilteredAndSortedInvestments] = useState<InvestmentWithCurrentValue[]>([]);
-
-
 
   // Modal states
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -138,14 +143,8 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         pricePromises.push(
           fetch(`/api/prices/stocks?symbols=${stockSymbols.join(',')}`)
             .then(res => res.json())
-            .then(data => {
-              console.log('Stock price response:', data);
-              return data.data || [];
-            })
-            .catch((error) => {
-              console.error('Stock price fetch error:', error);
-              return [];
-            })
+            .then(data => data.data || [])
+            .catch(() => [])
         );
       }
 
@@ -154,19 +153,13 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         pricePromises.push(
           fetch(`/api/prices/mutual-funds?schemeCodes=${mutualFundSymbols.join(',')}`)
             .then(res => res.json())
-            .then(data => {
-              console.log('Mutual fund price response:', data);
-              return data.data?.map((item: any) => ({
-                symbol: item.schemeCode,
-                price: item.nav,
-                source: item.source,
-                cached: item.cached
-              })) || [];
-            })
-            .catch((error) => {
-              console.error('Mutual fund price fetch error:', error);
-              return [];
-            })
+            .then(data => data.data?.map((item: any) => ({
+              symbol: item.schemeCode,
+              price: item.nav,
+              source: item.source,
+              cached: item.cached
+            })) || [])
+            .catch(() => [])
         );
       }
 
@@ -185,7 +178,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       setLastPriceUpdate(new Date());
     } catch (err) {
       console.error('Failed to fetch prices:', err);
-      // Don't set error state for price fetching failures
       setLastPriceUpdate(new Date());
     }
   };
@@ -224,7 +216,179 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     }
   }, [investments]);
 
-  // Handle investment form submission
+  const formatCurrency = (amount: number) => {
+    return `₹${amount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+  };
+
+  const formatPercentage = (percentage: number) => {
+    const sign = percentage >= 0 ? '+' : '';
+    return `${sign}${percentage.toFixed(2)}%`;
+  };
+
+  const getGainLossColor = (value: number) => {
+    if (value > 0) return 'success';
+    if (value < 0) return 'danger';
+    return 'neutral';
+  };
+
+  const getInvestmentTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      STOCK: 'Stock',
+      MUTUAL_FUND: 'Mutual Fund',
+      GOLD: 'Gold',
+      JEWELRY: 'Jewelry',
+      REAL_ESTATE: 'Real Estate',
+      FD: 'Fixed Deposit',
+      CRYPTO: 'Cryptocurrency',
+      OTHER: 'Other',
+    };
+    return labels[type] || type;
+  };
+
+  const getGoalName = (goalId?: string) => {
+    if (!goalId) return 'No Goal';
+    const goal = goals.find(g => g.id === goalId);
+    return goal?.name || 'Unknown Goal';
+  };
+
+  const getAccountName = (accountId: string) => {
+    const account = accounts.find(a => a.id === accountId);
+    return account?.name || 'Unknown Account';
+  };
+
+  // Table columns for compact view
+  const compactColumns: CompactTableColumn<InvestmentWithCurrentValue>[] = [
+    {
+      key: 'name',
+      title: 'Investment',
+      width: '25%',
+      render: (_, item) => (
+        <div className="min-w-0">
+          <div className="font-medium text-gray-900 truncate text-sm">
+            {item.investment.name}
+          </div>
+          <div className="text-xs text-gray-500 truncate">
+            {getInvestmentTypeLabel(item.investment.type)}
+            {item.investment.symbol && ` • ${item.investment.symbol}`}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'currentValue',
+      title: 'Value',
+      align: 'right',
+      width: '20%',
+      render: (_, item) => (
+        <div className="text-right">
+          <div className="font-semibold text-gray-900 text-sm">
+            {formatCurrency(item.currentValue)}
+          </div>
+          {item.investment.units && item.investment.buyPrice && (
+            <div className="text-xs text-gray-500">
+              {item.investment.units.toLocaleString('en-IN', { maximumFractionDigits: 2 })} units
+            </div>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'gainLoss',
+      title: 'P&L',
+      align: 'right',
+      width: '20%',
+      render: (_, item) => (
+        <div className="text-right space-y-1">
+          <div className="flex items-center justify-end space-x-1">
+            <span className="font-semibold text-sm">
+              {formatCurrency(Math.abs(item.gainLoss))}
+            </span>
+            <StatusIndicator
+              status={getGainLossColor(item.gainLoss)}
+              variant="dot"
+              size="sm"
+            />
+          </div>
+          <div className="text-xs">
+            {formatPercentage(item.gainLossPercentage)}
+          </div>
+        </div>
+      )
+    },
+    {
+      key: 'goal',
+      title: 'Goal',
+      width: '15%',
+      mobileHidden: true,
+      render: (_, item) => (
+        <span className="text-xs text-gray-600 truncate block">
+          {getGoalName(item.investment.goalId)}
+        </span>
+      )
+    },
+    {
+      key: 'account',
+      title: 'Account',
+      width: '15%',
+      mobileHidden: true,
+      render: (_, item) => (
+        <span className="text-xs text-gray-600 truncate block">
+          {getAccountName(item.investment.accountId)}
+        </span>
+      )
+    }
+  ];
+
+  // Quick actions
+  const quickActions: QuickAction[] = [
+    {
+      id: 'add-investment',
+      label: 'Add',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      ),
+      onClick: handleAddNew,
+      variant: 'primary'
+    },
+    {
+      id: 'refresh-prices',
+      label: 'Refresh',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      ),
+      onClick: handleRefreshPrices,
+      variant: 'secondary'
+    },
+    {
+      id: 'import',
+      label: 'Import',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+        </svg>
+      ),
+      onClick: handleImportOpen,
+      variant: 'secondary'
+    },
+    {
+      id: 'export',
+      label: 'Export',
+      icon: (
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+        </svg>
+      ),
+      onClick: handleExportOpen,
+      variant: 'secondary',
+      disabled: investments.length === 0
+    }
+  ];
+
+  // Action handlers (keeping existing logic)
   const handleInvestmentSubmit = async (formData: any) => {
     try {
       setIsSubmitting(true);
@@ -252,7 +416,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         throw new Error(errorData.error || 'Failed to save investment');
       }
 
-      // Refresh data
       await fetchData();
       setIsEditModalOpen(false);
       setSelectedInvestment(null);
@@ -263,7 +426,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     }
   };
 
-  // Handle investment deletion
   const handleInvestmentDelete = async () => {
     if (!selectedInvestment) return;
 
@@ -280,7 +442,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
         throw new Error(errorData.error || 'Failed to delete investment');
       }
 
-      // Refresh data
       await fetchData();
       setIsDeleteModalOpen(false);
       setSelectedInvestment(null);
@@ -291,34 +452,27 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     }
   };
 
-  // Handle edit button click
   const handleEdit = (investment: Investment) => {
     setSelectedInvestment(investment);
     setIsEditModalOpen(true);
   };
 
-  // Handle delete button click
   const handleDelete = (investment: Investment) => {
     setSelectedInvestment(investment);
     setIsDeleteModalOpen(true);
   };
 
-  // Handle view details click
   const handleViewDetails = (investment: Investment) => {
     if (onViewDetails) {
-      // If external handler is provided, use it
       onViewDetails(investment.id);
     } else {
-      // Otherwise, show details modal
       setSelectedInvestment(investment);
       setIsDetailsModalOpen(true);
     }
   };
 
-  // Handle add new investment
-  const handleAddNew = async () => {
+  async function handleAddNew() {
     setSelectedInvestment(null);
-    // Refresh accounts and goals data to ensure we have the latest options
     try {
       const [goalsRes, accountsRes] = await Promise.all([
         fetch('/api/goals'),
@@ -331,7 +485,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           accountsRes.json(),
         ]);
 
-        // Extract data from paginated responses
         const goalsArray = goalsData?.data || goalsData || [];
         const accountsArray = accountsData?.data || accountsData || [];
 
@@ -340,20 +493,17 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       }
     } catch (err) {
       console.error('Failed to refresh accounts and goals:', err);
-      // Continue opening the modal even if refresh fails
     }
 
     setIsEditModalOpen(true);
-  };
+  }
 
-  // Handle refresh prices
   const handleRefreshPrices = () => {
     fetchPrices(investments);
     setStatusMessage({ type: 'success', text: 'Refreshing prices...' });
     setTimeout(() => setStatusMessage(null), 3000);
   };
 
-  // Advanced features handlers
   const handleFiltersChange = (newFilters: InvestmentFilters) => {
     setFilters(newFilters);
   };
@@ -406,7 +556,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     setIsExportModalOpen(false);
   };
 
-  // Import handlers
   const handleImportOpen = () => {
     setIsImportModalOpen(true);
   };
@@ -421,8 +570,6 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
       text: `Import completed: ${result.success} successful, ${result.failed} failed`
     });
     setTimeout(() => setStatusMessage(null), 5000);
-
-    // Refresh data to show imported investments
     fetchData();
   };
 
@@ -454,80 +601,62 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
     );
   }
 
-  return (
-    <div className="space-y-4">
-        {/* Header Card */}
-        <CompactCard
-          badge={`${filteredAndSortedInvestments.length} of ${investments.length}`}
-          subtitle={lastPriceUpdate ? `Prices updated ${lastPriceUpdate.toLocaleTimeString()}` : undefined}
-          variant="default"
-          actions={
-            <QuickActions
-              actions={[
-                {
-                  id: 'add-investment',
-                  label: 'Add',
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  ),
-                  onClick: handleAddNew,
-                  variant: 'primary'
-                },
-                {
-                  id: 'refresh-prices',
-                  label: 'Refresh',
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  ),
-                  onClick: handleRefreshPrices,
-                  variant: 'secondary'
-                },
-                {
-                  id: 'import',
-                  label: 'Import',
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
-                    </svg>
-                  ),
-                  onClick: handleImportOpen,
-                  variant: 'secondary'
-                },
-                {
-                  id: 'export',
-                  label: 'Export',
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                  ),
-                  onClick: handleExportOpen,
-                  variant: 'secondary',
-                  disabled: investments.length === 0
-                },
-                {
-                  id: 'bulk-select',
-                  label: showBulkSelection ? 'Cancel' : 'Select',
-                  icon: (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  ),
-                  onClick: handleBulkSelectionToggle,
-                  variant: 'secondary',
-                  disabled: investments.length === 0
-                }
-              ]}
-              size="sm"
-              layout="horizontal"
-            />
-          }
-        />
+  // Table actions
+  const tableActions = (item: InvestmentWithCurrentValue) => (
+    <QuickActions
+      actions={[
+        {
+          id: 'view',
+          label: 'View',
+          icon: (
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+          ),
+          onClick: () => handleViewDetails(item.investment),
+          variant: 'secondary'
+        },
+        {
+          id: 'edit',
+          label: 'Edit',
+          icon: (
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+          ),
+          onClick: () => handleEdit(item.investment),
+          variant: 'secondary'
+        },
+        {
+          id: 'delete',
+          label: 'Delete',
+          icon: (
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+          ),
+          onClick: () => handleDelete(item.investment),
+          variant: 'danger'
+        }
+      ]}
+      size="sm"
+      layout="horizontal"
+    />
+  );
 
+  // Tab content
+  const listTab: Tab = {
+    id: 'list',
+    label: 'List View',
+    badge: filteredAndSortedInvestments.length,
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+      </svg>
+    ),
+    content: (
+      <div className="space-y-4">
         {/* Filters */}
         {investments.length > 0 && (
           <CompactCard variant="minimal" collapsible defaultCollapsed={true} title="Filters">
@@ -553,22 +682,7 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
           </CompactCard>
         )}
 
-        {/* Sort and Results Info */}
-        {investments.length > 0 && (
-          <div className="flex justify-between items-center">
-            <div className="text-sm text-gray-600">
-              Showing {filteredAndSortedInvestments.length} of {investments.length} investments
-            </div>
-            <div className="flex items-center space-x-4">
-              <InvestmentSort
-                sortOptions={sortOptions}
-                onSortChange={handleSortChange}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Investment Display */}
+        {/* Investment Table */}
         {investments.length === 0 ? (
           <CompactCard variant="minimal">
             <div className="text-center py-8">
@@ -583,137 +697,162 @@ const InvestmentList: React.FC<InvestmentListProps> = ({ className = '', onViewD
             </div>
           </CompactCard>
         ) : (
-          <InvestmentTable
-            investments={filteredAndSortedInvestments}
-            goals={goals}
-            accounts={accounts}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-            onViewDetails={handleViewDetails}
-            isLoading={isSubmitting}
-            showSelection={showBulkSelection}
-            selectedInvestments={selectedInvestments}
-            onSelectionChange={handleSelectionChange}
+          <CompactTable
+            data={filteredAndSortedInvestments}
+            columns={compactColumns}
+            rowKey={(item) => item.investment.id}
             onSort={(key, direction) => handleSortChange({ field: key as any, direction })}
             sortKey={sortOptions.field}
             sortDirection={sortOptions.direction}
+            loading={isSubmitting}
+            emptyMessage="No investments found"
+            selectable={showBulkSelection}
+            selectedItems={selectedInvestments}
+            onSelectionChange={handleSelectionChange}
+            actions={tableActions}
+            variant="compact"
+            maxHeight="600px"
           />
         )}
+      </div>
+    )
+  };
 
-        {/* Edit/Add Investment Modal */}
-        <Modal
-          isOpen={isEditModalOpen}
-          onClose={() => {
+  const tabs: Tab[] = [listTab];
+
+  return (
+    <div className={className}>
+      {/* Header */}
+      <CompactCard
+        title="My Investments"
+        badge={`${filteredAndSortedInvestments.length} of ${investments.length}`}
+        subtitle={lastPriceUpdate ? `Prices updated ${lastPriceUpdate.toLocaleTimeString()}` : undefined}
+        variant="default"
+        className="mb-4"
+        actions={
+          <QuickActions
+            actions={quickActions}
+            size="sm"
+            layout="horizontal"
+          />
+        }
+      />
+
+      {/* Main Content */}
+      <TabPanel
+        tabs={tabs}
+        variant="minimal"
+        size="sm"
+      />
+
+      {/* Modals - keeping existing modal logic */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedInvestment(null);
+        }}
+        title={selectedInvestment ? 'Edit Investment' : 'Add New Investment'}
+        size="lg"
+      >
+        <InvestmentForm
+          investment={selectedInvestment || undefined}
+          goals={goals}
+          accounts={accounts}
+          onSubmit={handleInvestmentSubmit}
+          onCancel={() => {
             setIsEditModalOpen(false);
             setSelectedInvestment(null);
           }}
-          title={selectedInvestment ? 'Edit Investment' : 'Add New Investment'}
-          size="lg"
-        >
-          <InvestmentForm
-            investment={selectedInvestment || undefined}
-            goals={goals}
-            accounts={accounts}
-            onSubmit={handleInvestmentSubmit}
-            onCancel={() => {
-              setIsEditModalOpen(false);
-              setSelectedInvestment(null);
-            }}
-            isLoading={isSubmitting}
-          />
-        </Modal>
+          isLoading={isSubmitting}
+        />
+      </Modal>
 
-        {/* Delete Confirmation Modal */}
-        <Modal
-          isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setSelectedInvestment(null);
-          }}
-          title="Delete Investment"
-          size="sm"
-        >
-          <div className="space-y-4">
-            <p className="text-gray-600">
-              Are you sure you want to delete &quot;{selectedInvestment?.name}&quot;? This action cannot be undone.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsDeleteModalOpen(false);
-                  setSelectedInvestment(null);
-                }}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleInvestmentDelete}
-                disabled={isSubmitting}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                {isSubmitting ? 'Deleting...' : 'Delete'}
-              </Button>
-            </div>
-          </div>
-        </Modal>
-
-        {/* Investment Details Modal */}
-        <Modal
-          isOpen={isDetailsModalOpen}
-          onClose={() => {
-            setIsDetailsModalOpen(false);
-            setSelectedInvestment(null);
-          }}
-          title={selectedInvestment?.name || 'Investment Details'}
-          size="xl"
-        >
-          {selectedInvestment && (
-            <InvestmentDetails
-              investmentId={selectedInvestment.id}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onBack={() => {
-                setIsDetailsModalOpen(false);
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedInvestment(null);
+        }}
+        title="Delete Investment"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Are you sure you want to delete &quot;{selectedInvestment?.name}&quot;? This action cannot be undone.
+          </p>
+          <div className="flex justify-end space-x-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsDeleteModalOpen(false);
                 setSelectedInvestment(null);
               }}
-            />
-          )}
-        </Modal>
-
-        {/* Export Portfolio Modal */}
-        <ExportPortfolio
-          investments={filteredAndSortedInvestments}
-          isOpen={isExportModalOpen}
-          onClose={handleExportClose}
-        />
-
-        {/* Import Modal */}
-        <ImportModal
-          isOpen={isImportModalOpen}
-          onClose={handleImportClose}
-          onImportComplete={handleImportComplete}
-        />
-
-        {/* Import History Modal */}
-        <ImportHistoryModal
-          isOpen={isImportHistoryModalOpen}
-          onClose={handleImportHistoryClose}
-        />
-
-        {/* Status Message */}
-        {statusMessage && (
-          <div className="fixed bottom-4 right-4 z-50">
-            <Alert
-              type={statusMessage.type}
-              message={statusMessage.text}
-              onClose={() => setStatusMessage(null)}
-            />
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleInvestmentDelete}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {isSubmitting ? 'Deleting...' : 'Delete'}
+            </Button>
           </div>
+        </div>
+      </Modal>
+
+      <Modal
+        isOpen={isDetailsModalOpen}
+        onClose={() => {
+          setIsDetailsModalOpen(false);
+          setSelectedInvestment(null);
+        }}
+        title={selectedInvestment?.name || 'Investment Details'}
+        size="xl"
+      >
+        {selectedInvestment && (
+          <InvestmentDetails
+            investmentId={selectedInvestment.id}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onBack={() => {
+              setIsDetailsModalOpen(false);
+              setSelectedInvestment(null);
+            }}
+          />
         )}
-      </div>
+      </Modal>
+
+      <ExportPortfolio
+        investments={filteredAndSortedInvestments}
+        isOpen={isExportModalOpen}
+        onClose={handleExportClose}
+      />
+
+      <ImportModal
+        isOpen={isImportModalOpen}
+        onClose={handleImportClose}
+        onImportComplete={handleImportComplete}
+      />
+
+      <ImportHistoryModal
+        isOpen={isImportHistoryModalOpen}
+        onClose={handleImportHistoryClose}
+      />
+
+      {statusMessage && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Alert
+            type={statusMessage.type}
+            message={statusMessage.text}
+            onClose={() => setStatusMessage(null)}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 
-export default InvestmentList;
+export default CompactInvestmentList;
