@@ -60,12 +60,24 @@ Convert the UI component modernization design into a series of actionable coding
 
 
 
+
   - Find all usage of old Card, InfoCard, SummaryCard components
   - Replace with CompactCard using appropriate variants
   - Update props to match CompactCard API
   - Test functionality and visual consistency
-  - _Requirements: 2.1, 2.2, 2.3, 5.1, 5.2_
+  --_Requirements: 2.1, 2.2, 2.3, 5.1, 5.2_
+
 - [ ] 5. Replace Legacy Action Components with QuickActions
+
+
+
+
+
+
+
+
+
+
 
 
 

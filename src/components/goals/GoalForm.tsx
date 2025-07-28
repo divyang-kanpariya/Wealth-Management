@@ -5,6 +5,7 @@ import { Goal } from '@/types';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import QuickActions from '../ui/QuickActions';
 
 interface GoalFormProps {
   goal?: Goal;
@@ -144,28 +145,45 @@ const GoalForm: React.FC<GoalFormProps> = ({
         </div>
       </div>
       
-      <div className="flex justify-end space-x-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <LoadingSpinner size="sm" className="mr-2" />
-              {goal ? 'Updating...' : 'Creating...'}
-            </>
-          ) : (
-            goal ? 'Update Goal' : 'Create Goal'
-          )}
-        </Button>
+      <div className="flex justify-end pt-4">
+        <QuickActions
+          actions={[
+            {
+              id: 'cancel-goal',
+              label: 'Cancel',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ),
+              onClick: onCancel,
+              disabled: isLoading,
+              variant: 'secondary'
+            },
+            {
+              id: 'submit-goal',
+              label: isLoading ? (goal ? 'Updating...' : 'Creating...') : (goal ? 'Update Goal' : 'Create Goal'),
+              icon: isLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ),
+              onClick: () => {
+                const form = document.querySelector('form');
+                if (form) {
+                  const event = new Event('submit', { bubbles: true, cancelable: true });
+                  form.dispatchEvent(event);
+                }
+              },
+              disabled: isLoading,
+              variant: 'primary'
+            }
+          ]}
+          size="md"
+          layout="horizontal"
+        />
       </div>
     </form>
   );

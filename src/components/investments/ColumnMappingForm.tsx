@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import QuickActions from '@/components/ui/QuickActions';
 import { ColumnMapping } from '@/types';
 
 interface ColumnMappingFormProps {
@@ -145,17 +146,37 @@ export function ColumnMappingForm({
         </div>
       </div>
 
-      <div className="flex justify-end space-x-3">
-        <Button variant="outline" onClick={onBack}>
-          Back
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={!canProceed || isLoading}
-          loading={isLoading}
-        >
-          Preview Import
-        </Button>
+      <div className="flex justify-end">
+        <QuickActions
+          actions={[
+            {
+              id: 'back-to-upload',
+              label: 'Back',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              ),
+              onClick: onBack,
+              variant: 'secondary'
+            },
+            {
+              id: 'preview-import',
+              label: 'Preview Import',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+              ),
+              onClick: handleSubmit,
+              disabled: !canProceed || isLoading,
+              variant: 'primary'
+            }
+          ]}
+          size="md"
+          layout="horizontal"
+        />
       </div>
     </div>
   );

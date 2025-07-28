@@ -5,6 +5,7 @@ import Button from '../ui/Button'
 import Modal from '../ui/Modal'
 import Select from '../ui/Select'
 import Input from '../ui/Input'
+import QuickActions from '../ui/QuickActions'
 
 interface ExportPortfolioProps {
   investments: InvestmentWithCurrentValue[]
@@ -187,20 +188,37 @@ const ExportPortfolio: React.FC<ExportPortfolioProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isExporting}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleExport}
-            disabled={isExporting || filteredCount === 0}
-          >
-            {isExporting ? 'Exporting...' : `Export ${filteredCount} Investments`}
-          </Button>
+        <div className="flex justify-end">
+          <QuickActions
+            actions={[
+              {
+                id: 'cancel-export',
+                label: 'Cancel',
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ),
+                onClick: onClose,
+                disabled: isExporting,
+                variant: 'secondary'
+              },
+              {
+                id: 'export-portfolio',
+                label: isExporting ? 'Exporting...' : `Export ${filteredCount} Investments`,
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                ),
+                onClick: handleExport,
+                disabled: isExporting || filteredCount === 0,
+                variant: 'primary'
+              }
+            ]}
+            size="md"
+            layout="horizontal"
+          />
         </div>
       </div>
     </Modal>

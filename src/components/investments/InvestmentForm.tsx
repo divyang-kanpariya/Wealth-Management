@@ -5,6 +5,7 @@ import { Investment, Goal, Account } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import Button from '../ui/Button';
+import QuickActions from '../ui/QuickActions';
 import { z } from 'zod';
 
 interface InvestmentFormProps {
@@ -330,23 +331,43 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
       )}
 
       {/* Form Actions */}
-      <div className="flex justify-end space-x-4">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
-        )}
-        <Button
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Saving...' : investment ? 'Update Investment' : 'Add Investment'}
-        </Button>
+      <div className="flex justify-end">
+        <QuickActions
+          actions={[
+            ...(onCancel ? [{
+              id: 'cancel-form',
+              label: 'Cancel',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ),
+              onClick: onCancel,
+              disabled: isLoading,
+              variant: 'secondary' as const
+            }] : []),
+            {
+              id: 'submit-form',
+              label: isLoading ? 'Saving...' : investment ? 'Update Investment' : 'Add Investment',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ),
+              onClick: () => {
+                const form = document.querySelector('form');
+                if (form) {
+                  const event = new Event('submit', { bubbles: true, cancelable: true });
+                  form.dispatchEvent(event);
+                }
+              },
+              disabled: isLoading,
+              variant: 'primary' as const
+            }
+          ]}
+          size="md"
+          layout="horizontal"
+        />
       </div>
     </form>
   );
