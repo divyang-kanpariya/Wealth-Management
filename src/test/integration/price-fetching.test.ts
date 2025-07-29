@@ -34,7 +34,7 @@ describe('Price Fetching Integration', () => {
   });
 
   it('should fetch stock price from NSE API', async () => {
-    const price = await getPrice('RELIANCE', 'NSE');
+    const price = await getPrice('RELIANCE');
     
     expect(price).toBe(2500.50);
     expect(global.fetch).toHaveBeenCalledWith(
@@ -44,7 +44,7 @@ describe('Price Fetching Integration', () => {
   });
 
   it('should fetch mutual fund NAV from AMFI', async () => {
-    const price = await getPrice('100001', 'AMFI');
+    const price = await getPrice('100001');
     
     expect(price).toBe(150.75);
     expect(global.fetch).toHaveBeenCalledWith(
@@ -66,11 +66,7 @@ describe('Price Fetching Integration', () => {
   });
 
   it('should batch fetch prices for multiple symbols', async () => {
-    const requests = [
-      { symbol: 'RELIANCE', source: 'NSE' as const },
-      { symbol: 'TCS', source: 'NSE' as const },
-      { symbol: '100001', source: 'AMFI' as const }
-    ];
+    const requests = ['RELIANCE', 'TCS', '100001'];
     
     const results = await batchGetPrices(requests);
     
@@ -92,7 +88,7 @@ describe('Price Fetching Integration', () => {
     });
     
     try {
-      await getPrice('BADSTOCK', 'NSE');
+      await getPrice('BADSTOCK');
       // Should not reach here
       expect(true).toBe(false);
     } catch (error) {
@@ -111,7 +107,7 @@ describe('Price Fetching Integration', () => {
     });
     
     // Should fall back to stale cache
-    const price = await getPrice('RELIANCE', 'NSE');
+    const price = await getPrice('RELIANCE');
     
     expect(price).toBe(2400);
   });

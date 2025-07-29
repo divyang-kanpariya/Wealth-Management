@@ -5,10 +5,10 @@ import { InvestmentType, AccountType } from '@prisma/client'
 describe('Task 2: Core Data Models and Validation - Summary', () => {
   describe('Sub-task 1: TypeScript interfaces and types for all entities', () => {
     it('should have Investment type with all required properties', async () => {
-      const { Investment } = await import('../types')
+      const types = await import('../types')
       
       // This test verifies that the Investment type exists and can be used
-      const mockInvestment: Investment = {
+      const mockInvestment: types.Investment = {
         id: 'test-id',
         type: InvestmentType.STOCK,
         name: 'Test Investment',

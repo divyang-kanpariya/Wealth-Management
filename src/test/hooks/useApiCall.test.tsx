@@ -2,7 +2,7 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import useApiCall from '../../hooks/useApiCall';
-import { ToastProvider } from '../../components/ui/Toast';
+import { ToastProvider } from '@/components/ui';
 
 // Mock the network utils
 vi.mock('../../lib/network-utils', () => ({

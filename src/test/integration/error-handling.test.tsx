@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ToastProvider } from '../../components/ui/Toast';
+import { ToastProvider } from '@/components/ui';
 import ErrorBoundary from '../../components/ErrorBoundary';
 import useApiCall from '../../hooks/useApiCall';
 import useErrorHandler from '../../hooks/useErrorHandler';

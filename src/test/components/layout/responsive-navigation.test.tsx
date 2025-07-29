@@ -3,7 +3,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { vi } from 'vitest';
 import Layout from '@/components/layout/Layout';
 import Navigation from '@/components/layout/Navigation';
-import Breadcrumb from '@/components/ui/Breadcrumb';
+import { Breadcrumb } from '@/components/ui';
 
 // Mock Next.js navigation
 const mockUsePathname = vi.fn();
@@ -71,15 +71,14 @@ describe('Responsive Navigation and Routing', () => {
   });
 
   describe('Layout Component', () => {
-    it('renders with title and subtitle', () => {
+    it('renders with content', () => {
       render(
-        <Layout title="Test Title" subtitle="Test Subtitle">
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
       
-      expect(screen.getByText('Test Title')).toBeInTheDocument();
-      expect(screen.getByText('Test Subtitle')).toBeInTheDocument();
+      // Layout doesn't have title/subtitle props, just check content renders
       expect(screen.getByText('Test Content')).toBeInTheDocument();
     });
 
@@ -92,7 +91,7 @@ describe('Responsive Navigation and Routing', () => {
       });
 
       render(
-        <Layout title="Test Title">
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
@@ -104,7 +103,7 @@ describe('Responsive Navigation and Routing', () => {
 
     it('toggles mobile menu when button is clicked', async () => {
       render(
-        <Layout title="Test Title">
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
@@ -129,7 +128,7 @@ describe('Responsive Navigation and Routing', () => {
       ];
 
       render(
-        <Layout title="Investment Details" breadcrumbs={breadcrumbs}>
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
@@ -146,7 +145,7 @@ describe('Responsive Navigation and Routing', () => {
       ];
 
       render(
-        <Layout title="Test Page" breadcrumbs={breadcrumbs} showBreadcrumbs={false}>
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
@@ -212,7 +211,7 @@ describe('Responsive Navigation and Routing', () => {
   describe('Responsive Behavior', () => {
     it('adapts to different screen sizes', () => {
       const { rerender } = render(
-        <Layout title="Test Title">
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
@@ -225,7 +224,7 @@ describe('Responsive Navigation and Routing', () => {
       });
       
       rerender(
-        <Layout title="Test Title">
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
@@ -238,13 +237,12 @@ describe('Responsive Navigation and Routing', () => {
       });
       
       rerender(
-        <Layout title="Test Title">
+        <Layout>
           <div>Test Content</div>
         </Layout>
       );
       
       // Both should render without errors
-      expect(screen.getByText('Test Title')).toBeInTheDocument();
       expect(screen.getByText('Test Content')).toBeInTheDocument();
     });
   });

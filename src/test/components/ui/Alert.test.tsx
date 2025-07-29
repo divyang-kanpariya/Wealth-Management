@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import Alert from '../../../components/ui/Alert';
+import { Alert } from '@/components/ui';
 
 describe('Alert', () => {
   it('renders with required message', () => {

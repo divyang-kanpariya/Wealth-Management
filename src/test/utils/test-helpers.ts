@@ -2,6 +2,9 @@ import { PrismaClient } from '@prisma/client'
 import { vi, expect } from 'vitest'
 import { TestDataFactory, TestInvestment, TestGoal, TestAccount } from '../factories'
 
+// Re-export TestDataFactory for use in other test files
+export { TestDataFactory }
+
 // Test database utilities
 export class TestDbUtils {
   private prisma: PrismaClient

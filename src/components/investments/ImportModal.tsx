@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import QuickActions from '@/components/ui/QuickActions';
-import LoadingState from '@/components/ui/LoadingState';
-import Alert from '@/components/ui/Alert';
+import { 
+  Button, 
+  Modal, 
+  QuickActions, 
+  LoadingState, 
+  Alert 
+} from '@/components/ui';
 import { ImportPreview, ImportResult, ColumnMapping } from '@/types';
 import { ImportPreviewTable } from './ImportPreviewTable';
 import { ColumnMappingForm } from './ColumnMappingForm';

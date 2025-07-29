@@ -1,10 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import QuickActions from '@/components/ui/QuickActions';
-import Alert from '@/components/ui/Alert';
+import { 
+  Button, 
+  Select, 
+  QuickActions, 
+  Alert 
+} from '@/components/ui';
 import { ColumnMapping } from '@/types';
 
 interface ColumnMappingFormProps {

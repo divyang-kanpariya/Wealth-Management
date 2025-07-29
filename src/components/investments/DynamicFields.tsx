@@ -1,6 +1,6 @@
 import React from 'react';
 import { InvestmentType } from '@prisma/client';
-import Input from '../ui/Input';
+import { Input } from '../ui';
 
 interface DynamicFieldsProps {
   investmentType: InvestmentType;

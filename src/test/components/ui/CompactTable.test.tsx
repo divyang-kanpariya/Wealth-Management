@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import CompactTable, { CompactTableColumn } from '@/components/ui/CompactTable';
+import { CompactTable, type CompactTableColumn } from '@/components/ui';
 
 interface TestData {
   id: string;

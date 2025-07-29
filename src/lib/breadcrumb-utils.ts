@@ -1,4 +1,4 @@
-import { BreadcrumbItem } from '@/components/ui/Breadcrumb';
+import { BreadcrumbItem } from '@/components/ui';
 
 export interface BreadcrumbConfig {
   [key: string]: {

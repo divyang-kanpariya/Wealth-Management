@@ -1,8 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import Button from '../../../components/ui/Button';
-import Modal from '../../../components/ui/Modal';
-import FormError from '../../../components/ui/FormError';
+import { Button, Modal, FormError } from '@/components/ui';
 
 describe('Core UI Components Enhancements', () => {
   describe('Button Component Enhancements', () => {

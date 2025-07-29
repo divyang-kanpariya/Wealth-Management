@@ -1,11 +1,13 @@
 import React, { useState } from 'react'
 import { InvestmentWithCurrentValue, ExportOptions } from '@/types'
 import { exportToCSV, exportToJSON, generateExportFilename, downloadFile } from '@/lib/portfolio-utils'
-import Button from '../ui/Button'
-import Modal from '../ui/Modal'
-import Select from '../ui/Select'
-import Input from '../ui/Input'
-import QuickActions from '../ui/QuickActions'
+import { 
+  Button, 
+  Modal, 
+  Select, 
+  Input, 
+  QuickActions 
+} from '../ui'
 
 interface ExportPortfolioProps {
   investments: InvestmentWithCurrentValue[]

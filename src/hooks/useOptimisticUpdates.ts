@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useRef } from 'react';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '@/components/ui';
 
 export interface OptimisticUpdate<T> {
   id: string;

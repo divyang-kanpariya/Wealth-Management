@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import FormError from '../../../components/ui/FormError';
+import { FormError } from '@/components/ui';
 
 describe('FormError', () => {
   it('renders nothing when no error is provided', () => {

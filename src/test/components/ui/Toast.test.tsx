@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderHook, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ToastProvider, useToast } from '../../../components/ui/Toast';
+import { ToastProvider, useToast } from '@/components/ui';
 
 // Mock timers
 beforeEach(() => {

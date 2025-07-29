@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
-import DataGrid, { DataGridItem } from '@/components/ui/DataGrid';
+import { DataGrid, type DataGridItem } from '@/components/ui';
 
 describe('DataGrid', () => {
   const mockItems: DataGridItem[] = [

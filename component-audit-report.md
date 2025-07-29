@@ -56,11 +56,7 @@ This audit analyzed all UI components in the `src/components/` directory to cate
   - `CompactPortfolioSummary.tsx` ✅
   - `CompactQuickStats.tsx` ✅
   - `CompactTopPerformers.tsx` ✅
-- **Legacy Components (4):**
-  - `AssetAllocation.tsx` ⚠️ (has compact version)
-  - `GoalProgress.tsx` ⚠️ (has compact version)
-  - `PortfolioSummary.tsx` ⚠️ (has compact version)
-  - `TopPerformers.tsx` ⚠️ (has compact version)
+- **Legacy Components:** ✅ All removed (replaced with compact versions)
 - `index.ts` - Barrel export
 
 #### Goals (5 components)
@@ -104,10 +100,7 @@ This audit analyzed all UI components in the `src/components/` directory to cate
 |------------------|----------|-------------|-------|----------|
 | Table | `ui/Table.tsx` | CompactTable | 1 usage | Medium |
 | LoadingSpinner | `ui/LoadingSpinner.tsx` | LoadingState | 4 usages | Low |
-| AssetAllocation | `dashboard/AssetAllocation.tsx` | CompactAssetAllocation | Unknown | Medium |
-| GoalProgress | `dashboard/GoalProgress.tsx` | CompactGoalProgress | Unknown | Medium |
-| PortfolioSummary | `dashboard/PortfolioSummary.tsx` | CompactPortfolioSummary | Unknown | Medium |
-| TopPerformers | `dashboard/TopPerformers.tsx` | CompactTopPerformers | Unknown | Medium |
+
 | InvestmentList | `investments/InvestmentList.tsx` | CompactInvestmentList | 1 usage | High |
 
 **Total Legacy Components:** 7

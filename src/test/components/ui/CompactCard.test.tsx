@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import CompactCard from '@/components/ui/CompactCard';
+import { CompactCard } from '@/components/ui';
 
 describe('CompactCard', () => {
   it('renders basic card with title and content', () => {

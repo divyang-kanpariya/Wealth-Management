@@ -3,59 +3,58 @@ import { describe, it, expect } from 'vitest';
 describe('Component Props and Structure', () => {
   describe('Button Component', () => {
     it('should have correct prop types', async () => {
-      const { ButtonProps } = await import('../../../components/ui/Button');
-      // This test verifies that the types are exported correctly
-      expect(ButtonProps).toBeDefined();
+      const ButtonModule = await import('../../../components/ui/Button');
+      // This test verifies that the component is exported correctly
+      expect(ButtonModule.default).toBeDefined();
     });
   });
 
   describe('Input Component', () => {
     it('should have correct prop types', async () => {
-      const { InputProps } = await import('../../../components/ui/Input');
-      expect(InputProps).toBeDefined();
+      const InputModule = await import('../../../components/ui/Input');
+      expect(InputModule.default).toBeDefined();
     });
   });
 
   describe('Select Component', () => {
     it('should have correct prop types', async () => {
-      const { SelectProps, SelectOption } = await import('../../../components/ui/Select');
-      expect(SelectProps).toBeDefined();
-      expect(SelectOption).toBeDefined();
+      const SelectModule = await import('../../../components/ui/Select');
+      expect(SelectModule.default).toBeDefined();
     });
   });
 
   describe('Modal Component', () => {
     it('should have correct prop types', async () => {
-      const { ModalProps } = await import('../../../components/ui/Modal');
-      expect(ModalProps).toBeDefined();
+      const ModalModule = await import('../../../components/ui/Modal');
+      expect(ModalModule.default).toBeDefined();
     });
   });
 
   describe('LoadingSpinner Component', () => {
     it('should have correct prop types', async () => {
-      const { LoadingSpinnerProps } = await import('../../../components/ui/LoadingSpinner');
-      expect(LoadingSpinnerProps).toBeDefined();
+      const LoadingSpinnerModule = await import('../../../components/ui/LoadingSpinner');
+      expect(LoadingSpinnerModule.default).toBeDefined();
     });
   });
 
   describe('LoadingState Component', () => {
     it('should have correct prop types', async () => {
-      const { LoadingStateProps } = await import('../../../components/ui/LoadingState');
-      expect(LoadingStateProps).toBeDefined();
+      const LoadingStateModule = await import('../../../components/ui/LoadingState');
+      expect(LoadingStateModule.default).toBeDefined();
     });
   });
 
   describe('ErrorState Component', () => {
     it('should have correct prop types', async () => {
-      const { ErrorStateProps } = await import('../../../components/ui/ErrorState');
-      expect(ErrorStateProps).toBeDefined();
+      const ErrorStateModule = await import('../../../components/ui/ErrorState');
+      expect(ErrorStateModule.default).toBeDefined();
     });
   });
 
   describe('Alert Component', () => {
     it('should have correct prop types', async () => {
-      const { AlertProps } = await import('../../../components/ui/Alert');
-      expect(AlertProps).toBeDefined();
+      const AlertModule = await import('../../../components/ui/Alert');
+      expect(AlertModule.default).toBeDefined();
     });
   });
 });
@@ -63,23 +62,22 @@ describe('Component Props and Structure', () => {
 describe('Layout Component Props', () => {
   describe('Header Component', () => {
     it('should have correct prop types', async () => {
-      const { HeaderProps } = await import('../../../components/layout/Header');
-      expect(HeaderProps).toBeDefined();
+      const HeaderModule = await import('../../../components/layout/Header');
+      expect(HeaderModule.default).toBeDefined();
     });
   });
 
   describe('Navigation Component', () => {
     it('should have correct prop types', async () => {
-      const { NavigationProps, NavigationItem } = await import('../../../components/layout/Navigation');
-      expect(NavigationProps).toBeDefined();
-      expect(NavigationItem).toBeDefined();
+      const NavigationModule = await import('../../../components/layout/Navigation');
+      expect(NavigationModule.default).toBeDefined();
     });
   });
 
   describe('Layout Component', () => {
     it('should have correct prop types', async () => {
-      const { LayoutProps } = await import('../../../components/layout/Layout');
-      expect(LayoutProps).toBeDefined();
+      const LayoutModule = await import('../../../components/layout/Layout');
+      expect(LayoutModule.default).toBeDefined();
     });
   });
 });

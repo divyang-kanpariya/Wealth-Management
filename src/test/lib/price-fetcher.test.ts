@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { PrismaClient } from '@prisma/client'
 import {
-  fetchStockPrice,
+  fetchStockPrices,
   fetchMutualFundNAV,
-  getMutualFundPrice,
+  getMutualFundNAV,
   getCachedPrice,
   updatePriceCache,
   getPrice,
@@ -40,14 +40,10 @@ describe('Price Fetcher', () => {
     vi.restoreAllMocks()
   })
 
-  describe('fetchStockPrice', () => {
+  describe('fetchStockPrices', () => {
     it('should fetch stock price from NSE API successfully', async () => {
       const mockResponse = {
-        info: {
-          symbol: 'RELIANCE',
-          companyName: 'Reliance Industries Limited',
-          lastPrice: 2500.50
-        }
+        'NSE:RELIANCE': 2500.50
       }
 
       ;(global.fetch as any).mockResolvedValueOnce({
@@ -55,8 +51,8 @@ describe('Price Fetcher', () => {
         json: () => Promise.resolve(mockResponse)
       })
 
-      const price = await fetchStockPrice('RELIANCE')
-      expect(price).toBe(2500.50)
+      const prices = await fetchStockPrices(['RELIANCE'])
+      expect(prices['NSE:RELIANCE']).toBe(2500.50)
       expect(global.fetch).toHaveBeenCalledWith(
         'https://www.nseindia.com/api/quote-equity?symbol=RELIANCE',
         expect.objectContaining({
@@ -75,7 +71,7 @@ describe('Price Fetcher', () => {
         statusText: 'Not Found'
       })
 
-      await expect(fetchStockPrice('INVALID')).rejects.toThrow('NSE API error: 404 Not Found')
+      await expect(fetchStockPrices(['INVALID'])).rejects.toThrow('NSE API error: 404 Not Found')
     })
 
     it('should throw error when NSE API returns invalid data', async () => {
@@ -84,13 +80,13 @@ describe('Price Fetcher', () => {
         json: () => Promise.resolve({ invalid: 'data' })
       })
 
-      await expect(fetchStockPrice('RELIANCE')).rejects.toThrow('Invalid NSE response for symbol RELIANCE')
+      await expect(fetchStockPrices(['RELIANCE'])).rejects.toThrow('Invalid NSE response for symbol RELIANCE')
     })
 
     it('should handle network errors', async () => {
       ;(global.fetch as any).mockRejectedValueOnce(new Error('Network error'))
 
-      await expect(fetchStockPrice('RELIANCE')).rejects.toThrow('Failed to fetch stock price for RELIANCE')
+      await expect(fetchStockPrices(['RELIANCE'])).rejects.toThrow('Failed to fetch stock price for RELIANCE')
     })
   })
 
@@ -150,7 +146,7 @@ describe('Price Fetcher', () => {
     })
   })
 
-  describe('getMutualFundPrice', () => {
+  describe('getMutualFundNAV', () => {
     it('should get mutual fund price by scheme code', async () => {
       const mockNavData = `Scheme Code|ISIN Div Payout|ISIN Div Reinvestment|Scheme Name|Net Asset Value|Date
 100001||INF209K01157|Test Fund|150.75|01-Jan-2024`
@@ -160,7 +156,7 @@ describe('Price Fetcher', () => {
         text: () => Promise.resolve(mockNavData)
       })
 
-      const price = await getMutualFundPrice('100001')
+      const price = await getMutualFundNAV('100001')
       expect(price).toBe(150.75)
     })
 
@@ -173,7 +169,7 @@ describe('Price Fetcher', () => {
         text: () => Promise.resolve(mockNavData)
       })
 
-      await expect(getMutualFundPrice('999999')).rejects.toThrow('Mutual fund with scheme code 999999 not found')
+      await expect(getMutualFundNAV('999999')).rejects.toThrow('Mutual fund with scheme code 999999 not found')
     })
   })
 
@@ -256,7 +252,7 @@ describe('Price Fetcher', () => {
 
       mockPrisma.priceCache.findUnique.mockResolvedValueOnce(mockCacheEntry)
 
-      const price = await getPrice('TEST', 'NSE')
+      const price = await getPrice('TEST')
       expect(price).toBe(100.50)
     })
 
@@ -277,7 +273,7 @@ describe('Price Fetcher', () => {
         json: () => Promise.resolve(mockResponse)
       })
 
-      const price = await getPrice('TEST', 'NSE')
+      const price = await getPrice('TEST')
       expect(price).toBe(200.75)
       expect(mockPrisma.priceCache.upsert).toHaveBeenCalled()
     })
@@ -294,7 +290,7 @@ describe('Price Fetcher', () => {
 
       ;(global.fetch as any).mockRejectedValueOnce(new Error('Network error'))
 
-      const price = await getPrice('TEST', 'NSE')
+      const price = await getPrice('TEST')
       expect(price).toBe(150.25)
     })
   })
@@ -321,10 +317,7 @@ MF001||INF209K01157|Test Fund|200.75|01-Jan-2024`
           text: () => Promise.resolve(mockNavData)
         })
 
-      const requests = [
-        { symbol: 'STOCK1', source: 'NSE' as const },
-        { symbol: 'MF001', source: 'AMFI' as const }
-      ]
+      const requests = ['STOCK1', 'MF001']
 
       const results = await batchGetPrices(requests)
 
@@ -354,10 +347,7 @@ MF001||INF209K01157|Test Fund|200.75|01-Jan-2024`
         })
         .mockRejectedValueOnce(new Error('Network error'))
 
-      const requests = [
-        { symbol: 'STOCK1', source: 'NSE' as const },
-        { symbol: 'INVALID', source: 'NSE' as const }
-      ]
+      const requests = ['STOCK1', 'INVALID']
 
       const results = await batchGetPrices(requests)
 

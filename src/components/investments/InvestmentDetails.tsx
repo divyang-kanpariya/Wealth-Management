@@ -2,12 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { Investment, InvestmentWithCurrentValue, Goal, Account } from '@/types';
 import { calculateInvestmentValue } from '@/lib/calculations';
 import { InvestmentType } from '@prisma/client';
-import Button from '../ui/Button';
-import LoadingState from '../ui/LoadingState';
-import ErrorState from '../ui/ErrorState';
-import CompactCard from '../ui/CompactCard';
-import QuickActions, { QuickAction } from '../ui/QuickActions';
-import DataGrid, { DataGridItem } from '../ui/DataGrid';
+import { 
+  Button, 
+  LoadingState, 
+  ErrorState, 
+  CompactCard, 
+  QuickActions, 
+  DataGrid,
+  type QuickAction,
+  type DataGridItem
+} from '../ui';
 
 interface InvestmentDetailsProps {
   investmentId: string;

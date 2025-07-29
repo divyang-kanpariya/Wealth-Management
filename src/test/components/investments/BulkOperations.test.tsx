@@ -2,7 +2,7 @@ import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import BulkOperations from '@/components/investments/BulkOperations'
-import { Investment, BulkOperationResult } from '@/types'
+import { Investment, InvestmentWithCurrentValue, BulkOperationResult } from '@/types'
 
 const mockInvestments: Investment[] = [
   {
@@ -37,8 +37,16 @@ const mockInvestments: Investment[] = [
   }
 ]
 
+const mockInvestmentsWithCurrentValue: InvestmentWithCurrentValue[] = mockInvestments.map(investment => ({
+  investment,
+  currentPrice: investment.buyPrice ? investment.buyPrice * 1.1 : 0,
+  currentValue: investment.units && investment.buyPrice ? investment.units * investment.buyPrice * 1.1 : 0,
+  gainLoss: investment.units && investment.buyPrice ? investment.units * investment.buyPrice * 0.1 : 0,
+  gainLossPercentage: 10
+}))
+
 const defaultProps = {
-  selectedInvestments: mockInvestments,
+  selectedInvestments: mockInvestmentsWithCurrentValue,
   onSelectionChange: vi.fn(),
   onBulkDelete: vi.fn(),
   onRefresh: vi.fn()
@@ -70,7 +78,7 @@ describe('BulkOperations', () => {
     render(
       <BulkOperations 
         {...defaultProps} 
-        selectedInvestments={[mockInvestments[0]]}
+        selectedInvestments={[mockInvestmentsWithCurrentValue[0]]}
       />
     )
     

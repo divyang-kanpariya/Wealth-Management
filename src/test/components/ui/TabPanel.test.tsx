@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import TabPanel, { Tab } from '@/components/ui/TabPanel';
+import { TabPanel, type Tab } from '@/components/ui';
 
 describe('TabPanel', () => {
   const mockTabs: Tab[] = [

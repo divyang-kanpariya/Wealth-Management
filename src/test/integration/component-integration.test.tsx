@@ -52,7 +52,7 @@ describe('Component Integration Tests', () => {
         })
 
       const InvestmentForm = (await import('@/components/investments/InvestmentForm')).default
-      render(<InvestmentForm onSubmit={vi.fn()} onCancel={vi.fn()} />)
+      render(<InvestmentForm onSubmit={vi.fn()} onCancel={vi.fn()} goals={[]} accounts={[]} />)
 
       // Wait for form to load
       await waitFor(() => {
@@ -129,7 +129,7 @@ describe('Component Integration Tests', () => {
         .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve([account]) })
 
       const InvestmentForm = (await import('@/components/investments/InvestmentForm')).default
-      render(<InvestmentForm onSubmit={vi.fn()} onCancel={vi.fn()} />)
+      render(<InvestmentForm onSubmit={vi.fn()} onCancel={vi.fn()} goals={[]} accounts={[]} />)
 
       await waitFor(() => {
         expect(screen.getByLabelText('Investment Type')).toBeInTheDocument()
@@ -515,7 +515,7 @@ describe('Component Integration Tests', () => {
       })
 
       const GoalProgress = (await import('@/components/goals/GoalProgress')).default
-      render(<GoalProgress goalId={goal.id} />)
+      render(<GoalProgress currentAmount={1000} targetAmount={5000} percentage={20} />)
 
       await waitFor(() => {
         expect(screen.getByText('House Fund')).toBeInTheDocument()

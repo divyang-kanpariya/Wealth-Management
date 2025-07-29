@@ -1,12 +1,14 @@
 'use client'
 
 import React, { useState, useEffect } from 'react';
-import Button from '../ui/Button';
-import LoadingState from '../ui/LoadingState';
-import ErrorState from '../ui/ErrorState';
-import Alert from '../ui/Alert';
-import CompactCard from '../ui/CompactCard';
-import DataGrid from '../ui/DataGrid';
+import { 
+  Button, 
+  LoadingState, 
+  ErrorState, 
+  Alert, 
+  CompactCard, 
+  DataGrid 
+} from '../ui';
 
 const InvestmentListDebug: React.FC = () => {
   const [investments, setInvestments] = useState<any[]>([]);

@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { apiRequest, RetryOptions } from '../lib/network-utils';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '@/components/ui';
 import useErrorHandler from './useErrorHandler';
 
 interface UseApiCallOptions {

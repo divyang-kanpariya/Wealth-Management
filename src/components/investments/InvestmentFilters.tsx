@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { InvestmentFilters, InvestmentType, Goal, Account } from '@/types';
-import Input from '../ui/Input';
-import Select from '../ui/Select';
-import Button from '../ui/Button';
+import { 
+  Input, 
+  Select, 
+  Button 
+} from '../ui';
 
 interface InvestmentFiltersComponentProps {
   filters: InvestmentFilters;
