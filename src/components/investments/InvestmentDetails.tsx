@@ -6,6 +6,7 @@ import Button from '../ui/Button';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import ErrorState from '../ui/ErrorState';
 import CompactCard from '../ui/CompactCard';
+import QuickActions, { QuickAction } from '../ui/QuickActions';
 
 interface InvestmentDetailsProps {
   investmentId: string;
@@ -79,7 +80,7 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
 
   useEffect(() => {
     fetchInvestment();
-  }, [investmentId]);
+  }, [fetchInvestment, investmentId]);
 
   useEffect(() => {
     if (investment && investment.symbol && ['STOCK', 'MUTUAL_FUND'].includes(investment.type)) {
@@ -179,31 +180,46 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
             </div>
           </div>
         </div>
-        <div className="flex space-x-3">
-          {investment.symbol && ['STOCK', 'MUTUAL_FUND'].includes(investment.type) && (
-            <Button
-              variant="outline"
-              onClick={handleRefreshPrice}
-              disabled={priceLoading}
-            >
-              {priceLoading ? 'Refreshing...' : 'Refresh Price'}
-            </Button>
-          )}
-          {onEdit && (
-            <Button variant="outline" onClick={() => onEdit(investment)}>
-              Edit
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="outline"
-              onClick={() => onDelete(investment)}
-              className="text-red-600 border-red-300 hover:bg-red-50"
-            >
-              Delete
-            </Button>
-          )}
-        </div>
+        <QuickActions
+          actions={[
+            ...(investment.symbol && ['STOCK', 'MUTUAL_FUND'].includes(investment.type) ? [{
+              id: 'refresh-price',
+              label: priceLoading ? 'Refreshing...' : 'Refresh Price',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ),
+              onClick: handleRefreshPrice,
+              disabled: priceLoading,
+              variant: 'secondary' as const
+            }] : []),
+            ...(onEdit ? [{
+              id: 'edit-investment',
+              label: 'Edit',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              ),
+              onClick: () => onEdit(investment),
+              variant: 'secondary' as const
+            }] : []),
+            ...(onDelete ? [{
+              id: 'delete-investment',
+              label: 'Delete',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              ),
+              onClick: () => onDelete(investment),
+              variant: 'danger' as const
+            }] : [])
+          ]}
+          size="md"
+          layout="horizontal"
+        />
       </div>
 
       {/* Main Content */}
