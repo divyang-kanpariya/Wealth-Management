@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import QuickActions from '@/components/ui/QuickActions';
+import Alert from '@/components/ui/Alert';
 import { ColumnMapping } from '@/types';
 
 interface ColumnMappingFormProps {
@@ -97,17 +98,20 @@ export function ColumnMappingForm({
       </div>
 
       {!canProceed && (
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <h4 className="font-medium text-red-900">Missing Required Fields</h4>
-          <p className="text-sm text-red-700 mt-1">
-            The following required fields are not mapped:
-          </p>
-          <ul className="list-disc list-inside text-sm text-red-700 mt-2">
-            {getMissingRequiredFields().map(field => (
-              <li key={field}>{field}</li>
-            ))}
-          </ul>
-        </div>
+        <Alert
+          type="error"
+          title="Missing Required Fields"
+          message={
+            <div>
+              <p>The following required fields are not mapped:</p>
+              <ul className="list-disc list-inside mt-2">
+                {getMissingRequiredFields().map(field => (
+                  <li key={field}>{field}</li>
+                ))}
+              </ul>
+            </div>
+          }
+        />
       )}
 
       <div className="bg-gray-50 rounded-md p-4">

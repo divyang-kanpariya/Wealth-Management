@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingState from './LoadingState';
 
 export interface CompactTableColumn<T> {
   key: string;
@@ -125,10 +126,7 @@ function CompactTable<T>({
   if (loading) {
     return (
       <div className={`${classes.container} rounded-lg overflow-hidden ${className}`}>
-        <div className="p-6 text-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Loading...</p>
-        </div>
+        <LoadingState message="Loading..." size="sm" />
       </div>
     );
   }

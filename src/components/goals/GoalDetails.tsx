@@ -302,24 +302,25 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ goalId, onBack }) => {
 
       {/* Details Section */}
       <CompactCard title="Goal Details">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Target Date</div>
-            <div className="font-medium">{formatDate(goal.targetDate.toISOString())}</div>
-          </div>
-          <div>
-            <div className="text-sm text-gray-500 mb-1">Time Remaining</div>
-            <div className={`font-medium ${timeRemaining.isOverdue ? 'text-red-600' : ''}`}>
-              {timeRemaining.text}
-            </div>
-          </div>
-          {goal.description && (
-            <div className="col-span-2">
-              <div className="text-sm text-gray-500 mb-1">Description</div>
-              <div className="font-medium">{goal.description}</div>
-            </div>
-          )}
-        </div>
+        <DataGrid
+          items={[
+            {
+              label: 'Target Date',
+              value: formatDate(goal.targetDate.toISOString())
+            },
+            {
+              label: 'Time Remaining',
+              value: timeRemaining.text,
+              color: timeRemaining.isOverdue ? 'danger' : 'default'
+            },
+            ...(goal.description ? [{
+              label: 'Description',
+              value: goal.description
+            }] : [])
+          ]}
+          columns={goal.description ? 1 : 2}
+          variant="default"
+        />
       </CompactCard>
 
       {/* Linked Investments Section */}

@@ -31,7 +31,7 @@ import {
   Tab
 } from '../ui';
 
-import LoadingSpinner from '../ui/LoadingSpinner';
+import LoadingState from '../ui/LoadingState';
 import ErrorState from '../ui/ErrorState';
 import Alert from '../ui/Alert';
 
@@ -583,9 +583,11 @@ const CompactInvestmentList: React.FC<CompactInvestmentListProps> = ({ className
 
   if (isLoading) {
     return (
-      <div className={`flex justify-center items-center py-12 ${className}`}>
-        <LoadingSpinner size="lg" />
-      </div>
+      <LoadingState 
+        message="Loading investments..." 
+        size="lg" 
+        className={`py-12 ${className}`}
+      />
     );
   }
 

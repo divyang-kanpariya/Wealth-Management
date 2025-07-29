@@ -3,10 +3,11 @@ import { Investment, InvestmentWithCurrentValue, Goal, Account } from '@/types';
 import { calculateInvestmentValue } from '@/lib/calculations';
 import { InvestmentType } from '@prisma/client';
 import Button from '../ui/Button';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import LoadingState from '../ui/LoadingState';
 import ErrorState from '../ui/ErrorState';
 import CompactCard from '../ui/CompactCard';
 import QuickActions, { QuickAction } from '../ui/QuickActions';
+import DataGrid, { DataGridItem } from '../ui/DataGrid';
 
 interface InvestmentDetailsProps {
   investmentId: string;
@@ -129,9 +130,11 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
 
   if (isLoading) {
     return (
-      <div className={`flex justify-center items-center py-12 ${className}`}>
-        <LoadingSpinner size="lg" />
-      </div>
+      <LoadingState 
+        message="Loading investment details..." 
+        size="lg" 
+        className={`py-12 ${className}`}
+      />
     );
   }
 
@@ -229,84 +232,93 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
           {/* Current Value Summary */}
           <div className={`rounded-lg border-2 p-6 ${gainLossBgColor}`}>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Value</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">Invested</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(investedValue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Current Value</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(currentValue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Gain/Loss</p>
-                <p className={`text-xl font-bold ${gainLossColor}`}>
-                  {formatCurrency(gainLoss)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Return %</p>
-                <p className={`text-xl font-bold ${gainLossColor}`}>
-                  {formatPercentage(gainLossPercentage)}
-                </p>
-              </div>
-            </div>
+            <DataGrid
+              items={[
+                {
+                  label: 'Invested',
+                  value: (
+                    <span className="text-xl font-bold text-gray-900">
+                      {formatCurrency(investedValue)}
+                    </span>
+                  )
+                },
+                {
+                  label: 'Current Value',
+                  value: (
+                    <span className="text-xl font-bold text-gray-900">
+                      {formatCurrency(currentValue)}
+                    </span>
+                  )
+                },
+                {
+                  label: 'Gain/Loss',
+                  value: (
+                    <span className={`text-xl font-bold ${gainLossColor}`}>
+                      {formatCurrency(gainLoss)}
+                    </span>
+                  ),
+                  color: gainLoss >= 0 ? 'success' : 'danger'
+                },
+                {
+                  label: 'Return %',
+                  value: (
+                    <span className={`text-xl font-bold ${gainLossColor}`}>
+                      {formatPercentage(gainLossPercentage)}
+                    </span>
+                  ),
+                  color: gainLoss >= 0 ? 'success' : 'danger'
+                }
+              ]}
+              columns={4}
+              variant="minimal"
+              className="bg-transparent"
+            />
           </div>
 
           {/* Investment Information */}
           <CompactCard title="Investment Information">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {isUnitBased ? (
-                <>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Units/Shares</p>
-                    <p className="text-lg text-gray-900 mt-1">
-                      {investment.units?.toLocaleString('en-IN', { maximumFractionDigits: 3 })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Buy Price</p>
-                    <p className="text-lg text-gray-900 mt-1">
-                      {formatCurrency(investment.buyPrice || 0)}
-                    </p>
-                  </div>
-                  {currentPrice && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Current Price</p>
-                      <p className="text-lg text-gray-900 mt-1">
+            <DataGrid
+              items={[
+                ...(isUnitBased ? [
+                  {
+                    label: 'Units/Shares',
+                    value: investment.units?.toLocaleString('en-IN', { maximumFractionDigits: 3 }) || '0'
+                  },
+                  {
+                    label: 'Buy Price',
+                    value: formatCurrency(investment.buyPrice || 0)
+                  },
+                  ...(currentPrice ? [{
+                    label: 'Current Price',
+                    value: (
+                      <div>
                         {formatCurrency(currentPrice)}
                         {lastPriceUpdate && (
-                          <span className="text-xs text-gray-500 ml-2">
-                            (Updated: {lastPriceUpdate.toLocaleTimeString()})
-                          </span>
+                          <div className="text-xs text-gray-500 mt-1">
+                            Updated: {lastPriceUpdate.toLocaleTimeString()}
+                          </div>
                         )}
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Value</p>
-                  <p className="text-lg text-gray-900 mt-1">
-                    {formatCurrency(investment.totalValue || 0)}
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-medium text-gray-600">Purchase Date</p>
-                <p className="text-lg text-gray-900 mt-1">
-                  {new Date(investment.buyDate).toLocaleDateString('en-IN', {
+                      </div>
+                    )
+                  }] : [])
+                ] : [
+                  {
+                    label: 'Total Value',
+                    value: formatCurrency(investment.totalValue || 0)
+                  }
+                ]),
+                {
+                  label: 'Purchase Date',
+                  value: new Date(investment.buyDate).toLocaleDateString('en-IN', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                  })}
-                </p>
-              </div>
-            </div>
+                  })
+                }
+              ]}
+              columns={2}
+              variant="default"
+            />
           </CompactCard>
 
           {/* Notes */}

@@ -71,20 +71,11 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
 
   if (selectedInvestments.length === 0) {
     return (
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-blue-700">
-              Select investments to perform bulk operations.
-            </p>
-          </div>
-        </div>
-      </div>
+      <Alert
+        type="info"
+        message="Select investments to perform bulk operations."
+        className="mb-6"
+      />
     );
   }
 
@@ -95,80 +86,74 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
 
   return (
     <>
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center text-yellow-700">
-              <svg className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-sm font-medium">
-                {selectedInvestments.length} investment{selectedInvestments.length !== 1 ? 's' : ''} selected
-              </span>
-            </div>
-
-            <div className="text-sm text-gray-600">
+      <Alert
+        type="warning"
+        title={`${selectedInvestments.length} investment${selectedInvestments.length !== 1 ? 's' : ''} selected`}
+        message={
+          <div className="space-y-3">
+            <div className="text-sm">
               Total Value: ₹{totalValue.toLocaleString('en-IN')}
             </div>
-          </div>
+            
+            <div className="flex justify-end">
+              <QuickActions
+                actions={[
+                  {
+                    id: 'clear-selection',
+                    label: 'Clear Selection',
+                    icon: (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    ),
+                    onClick: handleClearSelection,
+                    variant: 'secondary'
+                  },
+                  {
+                    id: 'delete-selected',
+                    label: 'Delete Selected',
+                    icon: (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    ),
+                    onClick: handleBulkDeleteClick,
+                    variant: 'danger'
+                  }
+                ]}
+                size="sm"
+                layout="horizontal"
+              />
+            </div>
 
-          <QuickActions
-            actions={[
-              {
-                id: 'clear-selection',
-                label: 'Clear Selection',
-                icon: (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ),
-                onClick: handleClearSelection,
-                variant: 'secondary'
-              },
-              {
-                id: 'delete-selected',
-                label: 'Delete Selected',
-                icon: (
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                ),
-                onClick: handleBulkDeleteClick,
-                variant: 'danger'
-              }
-            ]}
-            size="sm"
-            layout="horizontal"
-          />
-        </div>
-
-        {/* Selected investments preview */}
-        <div className="mt-3 pt-3 border-t border-yellow-200">
-          <div className="flex flex-wrap gap-2">
-            {selectedInvestments.slice(0, 5).map((investmentWithValue, index) => (
-              <span
-                key={investmentWithValue.investment.id}
-                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-              >
-                {investmentWithValue.investment.name}
-                <button
-                  onClick={() => onSelectionChange(selectedInvestments.filter(inv => inv.investment.id !== investmentWithValue.investment.id))}
-                  className="ml-1 text-blue-600 hover:text-blue-800"
+            {/* Selected investments preview */}
+            <div className="flex flex-wrap gap-2">
+              {selectedInvestments.slice(0, 5).map((investmentWithValue, index) => (
+                <span
+                  key={investmentWithValue.investment.id}
+                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
                 >
-                  <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </span>
-            ))}
-            {selectedInvestments.length > 5 && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                +{selectedInvestments.length - 5} more
-              </span>
-            )}
+                  {investmentWithValue.investment.name}
+                  <button
+                    onClick={() => onSelectionChange(selectedInvestments.filter(inv => inv.investment.id !== investmentWithValue.investment.id))}
+                    className="ml-1 text-blue-600 hover:text-blue-800"
+                  >
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </span>
+              ))}
+              {selectedInvestments.length > 5 && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  +{selectedInvestments.length - 5} more
+                </span>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
+        }
+        className="mb-6"
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal
@@ -231,16 +216,17 @@ const BulkOperations: React.FC<BulkOperationsProps> = ({
                 )}
 
                 {deleteResult.failed > 0 && (
-                  <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                    <h4 className="text-sm font-medium text-red-800 mb-2">
-                      Failed to delete {deleteResult.failed} investment${deleteResult.failed !== 1 ? 's' : ''}:
-                    </h4>
-                    <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
-                      {deleteResult.errors.map((error, index) => (
-                        <li key={index}>{error}</li>
-                      ))}
-                    </ul>
-                  </div>
+                  <Alert
+                    type="error"
+                    title={`Failed to delete ${deleteResult.failed} investment${deleteResult.failed !== 1 ? 's' : ''}`}
+                    message={
+                      <ul className="list-disc list-inside space-y-1">
+                        {deleteResult.errors.map((error, index) => (
+                          <li key={index}>{error}</li>
+                        ))}
+                      </ul>
+                    }
+                  />
                 )}
               </div>
 

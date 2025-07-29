@@ -2,9 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Button from '../ui/Button';
-import LoadingSpinner from '../ui/LoadingSpinner';
+import LoadingState from '../ui/LoadingState';
 import ErrorState from '../ui/ErrorState';
+import Alert from '../ui/Alert';
 import CompactCard from '../ui/CompactCard';
+import DataGrid from '../ui/DataGrid';
 
 const InvestmentListDebug: React.FC = () => {
   const [investments, setInvestments] = useState<any[]>([]);
@@ -98,12 +100,11 @@ const InvestmentListDebug: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Loading investments...</p>
-        </div>
-      </div>
+      <LoadingState 
+        message="Loading investments..." 
+        size="lg" 
+        className="py-12"
+      />
     );
   }
 
@@ -115,12 +116,16 @@ const InvestmentListDebug: React.FC = () => {
           message={error}
           onRetry={fetchData}
         />
-        <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <h3 className="text-red-800 font-medium mb-2">Debug Information:</h3>
-          <pre className="text-sm text-red-700 whitespace-pre-wrap">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
-        </div>
+        <Alert
+          type="error"
+          title="Debug Information"
+          message={
+            <pre className="text-sm whitespace-pre-wrap">
+              {JSON.stringify(debugInfo, null, 2)}
+            </pre>
+          }
+          className="mt-6"
+        />
       </div>
     );
   }
@@ -130,33 +135,38 @@ const InvestmentListDebug: React.FC = () => {
       {/* Debug Information Panel */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-blue-800 font-medium mb-2">🔍 Debug Information</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span className="text-blue-600 font-medium">Investments:</span>
-            <span className="ml-2">{debugInfo.investmentsCount}</span>
-          </div>
-          <div>
-            <span className="text-blue-600 font-medium">Goals:</span>
-            <span className="ml-2">{debugInfo.goalsCount}</span>
-          </div>
-          <div>
-            <span className="text-blue-600 font-medium">Accounts:</span>
-            <span className="ml-2">{debugInfo.accountsCount}</span>
-          </div>
-          <div>
-            <span className="text-blue-600 font-medium">Is Array:</span>
-            <span className="ml-2">{debugInfo.investmentsIsArray ? '✅' : '❌'}</span>
-          </div>
-        </div>
-        <div className="mt-3">
-          <span className="text-blue-600 font-medium">Last Updated:</span>
-          <span className="ml-2 text-xs">{debugInfo.timestamp}</span>
+        <DataGrid
+          items={[
+            {
+              label: 'Investments',
+              value: debugInfo.investmentsCount || 0
+            },
+            {
+              label: 'Goals',
+              value: debugInfo.goalsCount || 0
+            },
+            {
+              label: 'Accounts',
+              value: debugInfo.accountsCount || 0
+            },
+            {
+              label: 'Is Array',
+              value: debugInfo.investmentsIsArray ? '✅' : '❌',
+              color: debugInfo.investmentsIsArray ? 'success' : 'danger'
+            }
+          ]}
+          columns={4}
+          variant="compact"
+          className="mb-3"
+        />
+        <div className="mb-3">
+          <span className="text-blue-600 font-medium text-sm">Last Updated:</span>
+          <span className="ml-2 text-xs text-gray-600">{debugInfo.timestamp}</span>
         </div>
         <Button 
           variant="outline" 
           size="sm" 
           onClick={fetchData}
-          className="mt-3"
         >
           🔄 Refresh Data
         </Button>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import LoadingState from './LoadingState';
 
 export interface TableColumn<T> {
   key: string;
@@ -85,10 +86,7 @@ function Table<T>({
   if (loading) {
     return (
       <div className={`bg-white shadow-sm rounded-lg border ${className}`}>
-        <div className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading...</p>
-        </div>
+        <LoadingState message="Loading..." />
       </div>
     );
   }

@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import LoadingState from '@/components/ui/LoadingState';
+import ErrorState from '@/components/ui/ErrorState';
 import { ImportHistory } from '@/types';
 
 interface ImportHistoryModalProps {
@@ -80,16 +82,15 @@ export function ImportHistoryModal({ isOpen, onClose }: ImportHistoryModalProps)
     <Modal isOpen={isOpen} onClose={onClose} title="Import History">
       <div className="space-y-4">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
+          <ErrorState
+            title="Failed to load import history"
+            message={error}
+            onRetry={fetchHistory}
+          />
         )}
 
         {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading import history...</p>
-          </div>
+          <LoadingState message="Loading import history..." className="py-8" />
         ) : history.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500">No import history found.</p>

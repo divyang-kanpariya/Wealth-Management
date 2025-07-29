@@ -4,6 +4,8 @@ import { useState, useRef } from 'react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import QuickActions from '@/components/ui/QuickActions';
+import LoadingState from '@/components/ui/LoadingState';
+import Alert from '@/components/ui/Alert';
 import { ImportPreview, ImportResult, ColumnMapping } from '@/types';
 import { ImportPreviewTable } from './ImportPreviewTable';
 import { ColumnMappingForm } from './ColumnMappingForm';
@@ -184,9 +186,11 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
     <Modal isOpen={isOpen} onClose={handleClose} title="Import Investments">
       <div className="space-y-6">
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-md p-4">
-            <p className="text-red-800">{error}</p>
-          </div>
+          <Alert
+            type="error"
+            message={error}
+            onClose={() => setError(null)}
+          />
         )}
 
         {step === 'upload' && (
@@ -316,20 +320,17 @@ export function ImportModal({ isOpen, onClose, onImportComplete }: ImportModalPr
         )}
 
         {step === 'importing' && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Importing investments...</p>
-          </div>
+          <LoadingState message="Importing investments..." className="py-8" />
         )}
 
         {step === 'complete' && (
           <div className="text-center py-8">
-            <div className="bg-green-50 border border-green-200 rounded-md p-4 mb-4">
-              <h3 className="font-medium text-green-900">Import Complete!</h3>
-              <p className="text-sm text-green-700 mt-1">
-                Your investments have been successfully imported.
-              </p>
-            </div>
+            <Alert
+              type="success"
+              title="Import Complete!"
+              message="Your investments have been successfully imported."
+              className="mb-4"
+            />
             <Button onClick={handleClose}>
               Close
             </Button>
