@@ -1,15 +1,15 @@
-'use client';
-
 import React from 'react';
 import Layout from '@/components/layout/Layout';
-import { AccountList } from '@/components/accounts';
+import { AccountsDataPreparator } from '@/lib/server/data-preparators';
+import { AccountListView } from '@/components/accounts';
 
-const AccountsPage: React.FC = () => {
+const AccountsPage: React.FC = async () => {
+  const preparator = new AccountsDataPreparator();
+  const pageData = await preparator.prepare();
+
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <AccountList />
-      </div>
+      <AccountListView data={pageData} />
     </Layout>
   );
 };

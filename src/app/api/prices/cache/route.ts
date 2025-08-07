@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCacheStats, clearAllCaches } from '@/lib/price-fetcher'
+import { getCacheStats, clearAllCaches, getEnhancedCacheStats } from '@/lib/price-fetcher'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const stats = await getCacheStats()
+    const { searchParams } = new URL(request.url)
+    const enhanced = searchParams.get('enhanced') === 'true'
+    
+    const stats = enhanced ? await getEnhancedCacheStats() : await getCacheStats()
     return NextResponse.json(stats)
   } catch (error) {
     console.error('Cache stats API error:', error)

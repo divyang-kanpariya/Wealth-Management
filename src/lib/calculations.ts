@@ -1,4 +1,4 @@
-import { Investment, InvestmentWithCurrentValue, PortfolioSummary, GoalProgress, Goal } from '@/types'
+import { Investment, InvestmentWithCurrentValue, PortfolioSummary, GoalProgress, Goal, SIP, SIPTransaction, SIPWithCurrentValue, SIPSummary } from '@/types'
 
 /**
  * Calculate current value, gains/losses for a single investment
@@ -283,6 +283,185 @@ export function validateInvestmentData(investment: Investment): { isValid: boole
     if (!(investment.units && investment.buyPrice) && !investment.totalValue) {
       errors.push('Investment must have either (units and buyPrice) or totalValue')
     }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  }
+}
+
+/**
+ * Calculate SIP current value, gains/losses, and metrics
+ */
+export function calculateSipValue(
+  sip: SIP,
+  transactions: SIPTransaction[],
+  currentPrice?: number
+): SIPWithCurrentValue {
+  const totalInvested = transactions.reduce((sum, txn) => sum + txn.amount, 0)
+  const totalUnits = transactions.reduce((sum, txn) => sum + txn.units, 0)
+  const averageNAV = totalUnits > 0 ? totalInvested / totalUnits : 0
+  
+  const currentValue = currentPrice && totalUnits > 0 
+    ? totalUnits * currentPrice 
+    : totalInvested
+  
+  const gainLoss = currentValue - totalInvested
+  const gainLossPercentage = totalInvested > 0 ? (gainLoss / totalInvested) * 100 : 0
+  
+  // Calculate next transaction date based on frequency
+  const nextTransactionDate = calculateNextSipDate(sip, transactions)
+  
+  return {
+    sip,
+    totalInvested,
+    totalUnits,
+    currentValue,
+    averageNAV,
+    gainLoss,
+    gainLossPercentage,
+    nextTransactionDate
+  }
+}
+
+/**
+ * Calculate next SIP transaction date
+ */
+export function calculateNextSipDate(sip: SIP, transactions: SIPTransaction[]): Date | undefined {
+  if (sip.status !== 'ACTIVE') {
+    return undefined
+  }
+  
+  // If no transactions yet, return start date
+  if (transactions.length === 0) {
+    return sip.startDate
+  }
+  
+  // Get the last transaction date
+  const lastTransaction = transactions
+    .sort((a, b) => new Date(b.transactionDate).getTime() - new Date(a.transactionDate).getTime())[0]
+  
+  const lastDate = new Date(lastTransaction.transactionDate)
+  const nextDate = new Date(lastDate)
+  
+  switch (sip.frequency) {
+    case 'MONTHLY':
+      nextDate.setMonth(nextDate.getMonth() + 1)
+      break
+    case 'QUARTERLY':
+      nextDate.setMonth(nextDate.getMonth() + 3)
+      break
+    case 'YEARLY':
+      nextDate.setFullYear(nextDate.getFullYear() + 1)
+      break
+  }
+  
+  // Check if next date exceeds end date
+  if (sip.endDate && nextDate > sip.endDate) {
+    return undefined
+  }
+  
+  return nextDate
+}
+
+/**
+ * Calculate SIP portfolio summary
+ */
+export function calculateSipSummary(sipsWithValues: SIPWithCurrentValue[]): SIPSummary {
+  const totalSIPs = sipsWithValues.length
+  const activeSIPs = sipsWithValues.filter(item => item.sip.status === 'ACTIVE').length
+  
+  const totalMonthlyAmount = sipsWithValues
+    .filter(item => item.sip.status === 'ACTIVE')
+    .reduce((sum, item) => {
+      // Convert all frequencies to monthly equivalent
+      let monthlyAmount = item.sip.amount
+      switch (item.sip.frequency) {
+        case 'QUARTERLY':
+          monthlyAmount = item.sip.amount / 3
+          break
+        case 'YEARLY':
+          monthlyAmount = item.sip.amount / 12
+          break
+      }
+      return sum + monthlyAmount
+    }, 0)
+  
+  const totalInvested = sipsWithValues.reduce((sum, item) => sum + item.totalInvested, 0)
+  const totalCurrentValue = sipsWithValues.reduce((sum, item) => sum + item.currentValue, 0)
+  const totalGainLoss = totalCurrentValue - totalInvested
+  const totalGainLossPercentage = totalInvested > 0 ? (totalGainLoss / totalInvested) * 100 : 0
+  
+  return {
+    totalSIPs,
+    activeSIPs,
+    totalMonthlyAmount,
+    totalInvested,
+    totalCurrentValue,
+    totalGainLoss,
+    totalGainLossPercentage
+  }
+}
+
+/**
+ * Get SIPs due for transaction processing
+ */
+export function getSipsDueForProcessing(
+  sips: SIP[],
+  transactions: SIPTransaction[],
+  targetDate: Date = new Date()
+): SIP[] {
+  return sips.filter(sip => {
+    if (sip.status !== 'ACTIVE') {
+      return false
+    }
+    
+    const sipTransactions = transactions.filter(txn => txn.sipId === sip.id)
+    const nextDate = calculateNextSipDate(sip, sipTransactions)
+    
+    return nextDate && nextDate <= targetDate
+  })
+}
+
+/**
+ * Calculate SIP transaction units based on amount and NAV
+ */
+export function calculateSipTransactionUnits(amount: number, nav: number): number {
+  if (nav <= 0) {
+    throw new Error('NAV must be greater than 0')
+  }
+  return amount / nav
+}
+
+/**
+ * Validate SIP data consistency
+ */
+export function validateSipData(sip: SIP): { isValid: boolean; errors: string[] } {
+  const errors: string[] = []
+  
+  if (!sip.name || sip.name.trim().length === 0) {
+    errors.push('SIP name is required')
+  }
+  
+  if (!sip.symbol || sip.symbol.trim().length === 0) {
+    errors.push('Symbol is required')
+  }
+  
+  if (!sip.amount || sip.amount <= 0) {
+    errors.push('Amount must be greater than 0')
+  }
+  
+  if (!sip.startDate) {
+    errors.push('Start date is required')
+  }
+  
+  if (sip.endDate && sip.startDate && sip.endDate <= sip.startDate) {
+    errors.push('End date must be after start date')
+  }
+  
+  if (!sip.accountId || sip.accountId.trim().length === 0) {
+    errors.push('Account is required')
   }
   
   return {

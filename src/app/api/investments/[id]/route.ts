@@ -32,9 +32,15 @@ export const PUT = withErrorHandling(async (
   const body = await parseRequestBody(request)
   const validatedData = validateUpdateInvestment(body)
   
+  // Transform null values to undefined for Prisma
+  const transformedData = {
+    ...validatedData,
+    goalId: validatedData.goalId === null ? undefined : validatedData.goalId,
+  }
+  
   const updatedInvestment = await prisma.investment.update({
     where: { id },
-    data: validatedData,
+    data: transformedData,
     include: {
       goal: true,
       account: true,

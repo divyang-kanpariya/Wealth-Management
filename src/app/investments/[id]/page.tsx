@@ -1,43 +1,23 @@
-'use client'
-
 import React from 'react'
-import { useRouter } from 'next/navigation'
-import InvestmentDetails from '@/components/investments/InvestmentDetails'
+import { InvestmentDetailDataPreparator } from '@/lib/server/data-preparators'
+import InvestmentDetailView from '@/components/investments/InvestmentDetailView'
 import Layout from '@/components/layout/Layout'
 
 interface InvestmentDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string
-  }
+  }>
 }
 
-export default function InvestmentDetailsPage({ params }: InvestmentDetailsPageProps) {
-  const router = useRouter()
-
-  const handleBack = () => {
-    router.push('/investments')
-  }
-
-  const handleEdit = (investment: any) => {
-    // This would typically open an edit modal or navigate to edit page
-    console.log('Edit investment:', investment)
-  }
-
-  const handleDelete = (investment: any) => {
-    // This would typically show a confirmation dialog
-    console.log('Delete investment:', investment)
-  }
+export default async function InvestmentDetailsPage({ params }: InvestmentDetailsPageProps) {
+  const { id } = await params
+  
+  const preparator = new InvestmentDetailDataPreparator()
+  const pageData = await preparator.prepare(id)
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <InvestmentDetails
-          investmentId={params.id}
-          onBack={handleBack}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
-      </div>
+      <InvestmentDetailView data={pageData} />
     </Layout>
   )
 }

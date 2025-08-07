@@ -1,0 +1,5 @@
+type,name,symbol,units,buyPrice,totalValue,buyDate,goalName,accountName,notes
+STOCK,Reliance Industries Ltd,RELIANCE,10,2500.50,,2024-01-15,Long Term Growth,Zerodha,Blue chip stock
+MUTUAL_FUND,SBI Bluechip Fund,SBI_BLUECHIP,100,85.25,,2024-02-01,Retirement Fund,SBI Bank,Monthly SIP
+REAL_ESTATE,Apartment in Mumbai,,,,,5000000,2023-12-01,Real Estate Portfolio,HDFC Bank,Primary residence
+STOCK,HDFC Bank,HDFC,5,1650.75,,2024-01-20,Long Term Growth,Zerodha,Banking stock

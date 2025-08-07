@@ -8,11 +8,11 @@ describe('GoalForm', () => {
     id: 'goal-1',
     name: 'Test Goal',
     targetAmount: 10000,
-    targetDate: new Date('2025-12-31').toISOString(),
+    targetDate: new Date('2025-12-31'),
     priority: 2,
     description: 'Test description',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
     investments: [],
   };
 

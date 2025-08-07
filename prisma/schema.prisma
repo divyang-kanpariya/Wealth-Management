@@ -24,22 +24,31 @@ model Investment {
   updatedAt  DateTime       @updatedAt
   account    Account        @relation(fields: [accountId], references: [id])
   goal       Goal?          @relation(fields: [goalId], references: [id])
+  valueHistory InvestmentValueHistory[]
 
   @@index([accountId], map: "investments_accountId_fkey")
   @@index([goalId], map: "investments_goalId_fkey")
+  @@index([type])
+  @@index([symbol])
+  @@index([createdAt])
+  @@index([buyDate])
+  @@index([accountId, type])
+  @@index([goalId, type])
   @@map("investments")
 }
 
 model Goal {
-  id           String       @id @default(cuid())
+  id           String                @id @default(cuid())
   name         String
   targetAmount Float
   targetDate   DateTime
-  priority     Int?         @default(1)
+  priority     Int?                  @default(1)
   description  String?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime              @default(now())
+  updatedAt    DateTime              @updatedAt
   investments  Investment[]
+  sips         SIP[]
+  progressHistory GoalProgressHistory[]
 
   @@map("goals")
 }
@@ -52,6 +61,7 @@ model Account {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
   investments Investment[]
+  sips        SIP[]
 
   @@map("accounts")
 }
@@ -63,7 +73,22 @@ model PriceCache {
   lastUpdated DateTime @default(now())
   source      String
 
+  @@index([lastUpdated])
+  @@index([source])
   @@map("price_cache")
+}
+
+model PriceHistory {
+  id        String   @id @default(cuid())
+  symbol    String
+  price     Float
+  source    String
+  timestamp DateTime @default(now())
+  
+  @@index([symbol, timestamp])
+  @@index([symbol])
+  @@index([timestamp])
+  @@map("price_history")
 }
 
 enum InvestmentType {
@@ -82,4 +107,156 @@ enum AccountType {
   DEMAT
   BANK
   OTHER
+}
+
+enum SIPStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum SIPFrequency {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model SIP {
+  id           String        @id @default(cuid())
+  name         String
+  symbol       String
+  amount       Float
+  frequency    SIPFrequency
+  startDate    DateTime
+  endDate      DateTime?
+  status       SIPStatus     @default(ACTIVE)
+  goalId       String?
+  accountId    String
+  notes        String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  account      Account       @relation(fields: [accountId], references: [id])
+  goal         Goal?         @relation(fields: [goalId], references: [id])
+  transactions SIPTransaction[]
+  
+  @@index([accountId])
+  @@index([goalId])
+  @@index([status])
+  @@index([symbol])
+  @@index([startDate])
+  @@map("sips")
+}
+
+model SIPTransaction {
+  id            String   @id @default(cuid())
+  sipId         String
+  amount        Float
+  nav           Float
+  units         Float
+  transactionDate DateTime
+  status        String   @default("COMPLETED") // COMPLETED, FAILED, PENDING
+  errorMessage  String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  sip           SIP      @relation(fields: [sipId], references: [id], onDelete: Cascade)
+  
+  @@index([sipId])
+  @@index([transactionDate])
+  @@index([status])
+  @@map("sip_transactions")
+}
+
+model ImportHistory {
+  id          String   @id @default(cuid())
+  filename    String
+  totalRows   Int
+  successRows Int
+  failedRows  Int
+  status      String   // COMPLETED, FAILED, PARTIAL
+  errors      Json?    // Store validation errors as JSON
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([createdAt])
+  @@index([status])
+  @@map("import_history")
+}
+
+// Historical price data for stocks/mutual funds
+model HistoricalPrice {
+  id        String   @id @default(cuid())
+  symbol    String
+  date      DateTime @db.Date
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    BigInt?
+  source    String   @default("API")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([symbol, date])
+  @@index([symbol])
+  @@index([date])
+  @@map("historical_prices")
+}
+
+// Portfolio value snapshots over time
+model PortfolioSnapshot {
+  id                      String   @id @default(cuid())
+  date                    DateTime @db.Date @unique
+  totalValue              Float
+  totalInvested           Float
+  totalGainLoss           Float
+  totalGainLossPercentage Float
+  assetAllocation         Json
+  accountDistribution     Json
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  @@index([date])
+  @@map("portfolio_snapshots")
+}
+
+// Goal progress history
+model GoalProgressHistory {
+  id              String   @id @default(cuid())
+  goalId          String
+  date            DateTime @db.Date
+  currentValue    Float
+  progress        Float
+  remainingAmount Float
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  goal            Goal     @relation(fields: [goalId], references: [id], onDelete: Cascade)
+  
+  @@unique([goalId, date])
+  @@index([goalId])
+  @@index([date])
+  @@map("goal_progress_history")
+}
+
+// Investment value history (for individual investments)
+model InvestmentValueHistory {
+  id                 String     @id @default(cuid())
+  investmentId       String
+  date               DateTime   @db.Date
+  price              Float
+  currentValue       Float
+  gainLoss           Float
+  gainLossPercentage Float
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  
+  investment         Investment @relation(fields: [investmentId], references: [id], onDelete: Cascade)
+  
+  @@unique([investmentId, date])
+  @@index([investmentId])
+  @@index([date])
+  @@map("investment_value_history")
 }

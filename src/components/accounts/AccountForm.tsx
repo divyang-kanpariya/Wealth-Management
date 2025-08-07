@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { AccountType } from '@prisma/client';
 import { Account } from '@/types';
@@ -5,6 +7,7 @@ import Button from '../ui/Button';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
 import LoadingSpinner from '../ui/LoadingSpinner';
+import QuickActions from '../ui/QuickActions';
 
 interface AccountFormProps {
   account?: Account;
@@ -36,11 +39,11 @@ const AccountForm: React.FC<AccountFormProps> = ({
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Account name is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -48,7 +51,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    
+
     // Clear error when field is edited
     if (errors[name]) {
       setErrors((prev) => {
@@ -61,11 +64,11 @@ const AccountForm: React.FC<AccountFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     try {
       await onSubmit(formData);
     } catch (error) {
@@ -85,7 +88,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
           error={errors.name}
           required
         />
-        
+
         <Select
           label="Account Type"
           name="type"
@@ -94,7 +97,7 @@ const AccountForm: React.FC<AccountFormProps> = ({
           options={ACCOUNT_TYPE_OPTIONS}
           required
         />
-        
+
         <div className="w-full">
           <label htmlFor="notes" className="block text-sm font-medium text-gray-700 mb-1">
             Notes
@@ -110,29 +113,46 @@ const AccountForm: React.FC<AccountFormProps> = ({
           />
         </div>
       </div>
-      
-      <div className="flex justify-end space-x-3 pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isLoading}
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <>
-              <LoadingSpinner size="sm" className="mr-2" />
-              {account ? 'Updating...' : 'Creating...'}
-            </>
-          ) : (
-            account ? 'Update Account' : 'Create Account'
-          )}
-        </Button>
+
+      <div className="flex justify-end pt-4">
+        <QuickActions
+          actions={[
+            {
+              id: 'cancel-account',
+              label: 'Cancel',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ),
+              onClick: onCancel,
+              disabled: isLoading,
+              variant: 'secondary'
+            },
+            {
+              id: 'submit-account',
+              label: isLoading ? (account ? 'Updating...' : 'Creating...') : (account ? 'Update Account' : 'Create Account'),
+              icon: isLoading ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              ),
+              onClick: () => {
+                const form = document.querySelector('form');
+                if (form) {
+                  const event = new Event('submit', { bubbles: true, cancelable: true });
+                  form.dispatchEvent(event);
+                }
+              },
+              disabled: isLoading,
+              variant: 'primary'
+            }
+          ]}
+          size="md"
+          layout="horizontal"
+        />
       </div>
     </form>
   );

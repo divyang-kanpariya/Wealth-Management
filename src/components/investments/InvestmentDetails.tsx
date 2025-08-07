@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Investment, InvestmentWithCurrentValue, Goal, Account } from '@/types';
-import { calculateInvestmentValue } from '@/lib/calculations';
+import React from 'react';
+import { Investment, InvestmentWithCurrentValue } from '@/types';
+import { InvestmentDetailPageData } from '@/lib/server/data-preparators';
 import { InvestmentType } from '@prisma/client';
-import Button from '../ui/Button';
-import LoadingSpinner from '../ui/LoadingSpinner';
-import ErrorState from '../ui/ErrorState';
+import { 
+  Button, 
+  CompactCard, 
+  QuickActions, 
+  DataGrid,
+  type QuickAction,
+  type DataGridItem
+} from '../ui';
 
 interface InvestmentDetailsProps {
-  investmentId: string;
+  data: InvestmentDetailPageData;
   onEdit?: (investment: Investment) => void;
   onDelete?: (investment: Investment) => void;
   onBack?: () => void;
@@ -15,83 +20,13 @@ interface InvestmentDetailsProps {
 }
 
 const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
-  investmentId,
+  data,
   onEdit,
   onDelete,
   onBack,
   className = '',
 }) => {
-  const [investment, setInvestment] = useState<Investment | null>(null);
-  const [investmentWithValue, setInvestmentWithValue] = useState<InvestmentWithCurrentValue | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [currentPrice, setCurrentPrice] = useState<number | null>(null);
-  const [priceLoading, setPriceLoading] = useState(false);
-  const [lastPriceUpdate, setLastPriceUpdate] = useState<Date | null>(null);
-
-  const fetchInvestment = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const response = await fetch(`/api/investments/${investmentId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch investment details');
-      }
-
-      const data = await response.json();
-      setInvestment(data.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch investment');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchCurrentPrice = async (symbol: string, type: InvestmentType) => {
-    try {
-      setPriceLoading(true);
-      let response;
-
-      if (type === 'STOCK') {
-        response = await fetch(`/api/prices/stocks?symbol=${symbol}`);
-      } else if (type === 'MUTUAL_FUND') {
-        response = await fetch(`/api/prices/mutual-funds?schemeCode=${symbol}`);
-      } else {
-        return; // No price fetching for other types
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        const price = type === 'STOCK' ? data.price : data.nav;
-        if (price && price > 0) {
-          setCurrentPrice(price);
-          setLastPriceUpdate(new Date());
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch current price:', err);
-    } finally {
-      setPriceLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchInvestment();
-  }, [investmentId]);
-
-  useEffect(() => {
-    if (investment && investment.symbol && ['STOCK', 'MUTUAL_FUND'].includes(investment.type)) {
-      fetchCurrentPrice(investment.symbol, investment.type);
-    }
-  }, [investment]);
-
-  useEffect(() => {
-    if (investment) {
-      const investmentWithValue = calculateInvestmentValue(investment, currentPrice || undefined);
-      setInvestmentWithValue(investmentWithValue);
-    }
-  }, [investment, currentPrice]);
+  const { investment, investmentWithValue, currentPrice, lastPriceUpdate } = data;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-IN', {
@@ -119,36 +54,16 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
     return labels[type];
   };
 
-  const handleRefreshPrice = () => {
-    if (investment && investment.symbol) {
-      fetchCurrentPrice(investment.symbol, investment.type);
-    }
+  const handleRefreshPrice = async () => {
+    // For server-rendered pages, we would need to implement a server action
+    // or trigger a revalidation. For now, we'll just reload the page.
+    window.location.reload();
   };
-
-  if (isLoading) {
-    return (
-      <div className={`flex justify-center items-center py-12 ${className}`}>
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error || !investment || !investmentWithValue) {
-    return (
-      <div className={className}>
-        <ErrorState
-          title="Failed to load investment details"
-          message={error || 'Investment not found'}
-          onRetry={fetchInvestment}
-        />
-      </div>
-    );
-  }
 
   const { gainLoss, gainLossPercentage, currentValue } = investmentWithValue;
   const isUnitBased = investment.units && investment.buyPrice;
   const investedValue = isUnitBased 
-    ? investment.units * investment.buyPrice 
+    ? (investment.units ?? 0) * (investment.buyPrice ?? 0)
     : investment.totalValue || 0;
 
   const gainLossColor = gainLoss >= 0 ? 'text-green-600' : 'text-red-600';
@@ -178,31 +93,45 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
             </div>
           </div>
         </div>
-        <div className="flex space-x-3">
-          {investment.symbol && ['STOCK', 'MUTUAL_FUND'].includes(investment.type) && (
-            <Button
-              variant="outline"
-              onClick={handleRefreshPrice}
-              disabled={priceLoading}
-            >
-              {priceLoading ? 'Refreshing...' : 'Refresh Price'}
-            </Button>
-          )}
-          {onEdit && (
-            <Button variant="outline" onClick={() => onEdit(investment)}>
-              Edit
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="outline"
-              onClick={() => onDelete(investment)}
-              className="text-red-600 border-red-300 hover:bg-red-50"
-            >
-              Delete
-            </Button>
-          )}
-        </div>
+        <QuickActions
+          actions={[
+            ...(investment.symbol && ['STOCK', 'MUTUAL_FUND'].includes(investment.type) ? [{
+              id: 'refresh-price',
+              label: 'Refresh Price',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              ),
+              onClick: handleRefreshPrice,
+              variant: 'secondary' as const
+            }] : []),
+            ...(onEdit ? [{
+              id: 'edit-investment',
+              label: 'Edit',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              ),
+              onClick: () => onEdit(investment),
+              variant: 'secondary' as const
+            }] : []),
+            ...(onDelete ? [{
+              id: 'delete-investment',
+              label: 'Delete',
+              icon: (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              ),
+              onClick: () => onDelete(investment),
+              variant: 'danger' as const
+            }] : [])
+          ]}
+          size="md"
+          layout="horizontal"
+        />
       </div>
 
       {/* Main Content */}
@@ -212,104 +141,108 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
           {/* Current Value Summary */}
           <div className={`rounded-lg border-2 p-6 ${gainLossBgColor}`}>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">Current Value</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div>
-                <p className="text-sm text-gray-600">Invested</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(investedValue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Current Value</p>
-                <p className="text-xl font-bold text-gray-900">
-                  {formatCurrency(currentValue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Gain/Loss</p>
-                <p className={`text-xl font-bold ${gainLossColor}`}>
-                  {formatCurrency(gainLoss)}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Return %</p>
-                <p className={`text-xl font-bold ${gainLossColor}`}>
-                  {formatPercentage(gainLossPercentage)}
-                </p>
-              </div>
-            </div>
+            <DataGrid
+              items={[
+                {
+                  label: 'Invested',
+                  value: (
+                    <span className="text-xl font-bold text-gray-900">
+                      {formatCurrency(investedValue)}
+                    </span>
+                  )
+                },
+                {
+                  label: 'Current Value',
+                  value: (
+                    <span className="text-xl font-bold text-gray-900">
+                      {formatCurrency(currentValue)}
+                    </span>
+                  )
+                },
+                {
+                  label: 'Gain/Loss',
+                  value: (
+                    <span className={`text-xl font-bold ${gainLossColor}`}>
+                      {formatCurrency(gainLoss)}
+                    </span>
+                  ),
+                  color: gainLoss >= 0 ? 'success' : 'danger'
+                },
+                {
+                  label: 'Return %',
+                  value: (
+                    <span className={`text-xl font-bold ${gainLossColor}`}>
+                      {formatPercentage(gainLossPercentage)}
+                    </span>
+                  ),
+                  color: gainLoss >= 0 ? 'success' : 'danger'
+                }
+              ]}
+              columns={4}
+              variant="minimal"
+              className="bg-transparent"
+            />
           </div>
 
           {/* Investment Information */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Investment Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {isUnitBased ? (
-                <>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Units/Shares</p>
-                    <p className="text-lg text-gray-900 mt-1">
-                      {investment.units?.toLocaleString('en-IN', { maximumFractionDigits: 3 })}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Buy Price</p>
-                    <p className="text-lg text-gray-900 mt-1">
-                      {formatCurrency(investment.buyPrice || 0)}
-                    </p>
-                  </div>
-                  {currentPrice && (
-                    <div>
-                      <p className="text-sm font-medium text-gray-600">Current Price</p>
-                      <p className="text-lg text-gray-900 mt-1">
+          <CompactCard title="Investment Information">
+            <DataGrid
+              items={[
+                ...(isUnitBased ? [
+                  {
+                    label: 'Units/Shares',
+                    value: investment.units?.toLocaleString('en-IN', { maximumFractionDigits: 3 }) || '0'
+                  },
+                  {
+                    label: 'Buy Price',
+                    value: formatCurrency(investment.buyPrice || 0)
+                  },
+                  ...(currentPrice ? [{
+                    label: 'Current Price',
+                    value: (
+                      <div>
                         {formatCurrency(currentPrice)}
-                        {lastPriceUpdate && (
-                          <span className="text-xs text-gray-500 ml-2">
-                            (Updated: {lastPriceUpdate.toLocaleTimeString()})
-                          </span>
-                        )}
-                      </p>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Total Value</p>
-                  <p className="text-lg text-gray-900 mt-1">
-                    {formatCurrency(investment.totalValue || 0)}
-                  </p>
-                </div>
-              )}
-              <div>
-                <p className="text-sm font-medium text-gray-600">Purchase Date</p>
-                <p className="text-lg text-gray-900 mt-1">
-                  {new Date(investment.buyDate).toLocaleDateString('en-IN', {
+                        <div className="text-xs text-gray-500 mt-1">
+                          Updated: {lastPriceUpdate.toLocaleTimeString()}
+                        </div>
+                      </div>
+                    )
+                  }] : [])
+                ] : [
+                  {
+                    label: 'Total Value',
+                    value: formatCurrency(investment.totalValue || 0)
+                  }
+                ]),
+                {
+                  label: 'Purchase Date',
+                  value: new Date(investment.buyDate).toLocaleDateString('en-IN', {
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
+                  })
+                }
+              ]}
+              columns={2}
+              variant="default"
+            />
+          </CompactCard>
 
           {/* Notes */}
           {investment.notes && (
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Notes</h2>
+            <CompactCard title="Notes">
               <p className="text-gray-700 whitespace-pre-wrap">{investment.notes}</p>
-            </div>
+            </CompactCard>
           )}
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Goal Information */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Linked Goal</h3>
+          <CompactCard title="Linked Goal">
             <div>
               <p className="font-medium text-gray-900">
-                {investment.goal?.name || 'Unknown Goal'}
+                {investment.goal?.name || 'No Goal Linked'}
               </p>
               {investment.goal?.description && (
                 <p className="text-sm text-gray-600 mt-2">
@@ -333,11 +266,10 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                 </div>
               )}
             </div>
-          </div>
+          </CompactCard>
 
           {/* Account Information */}
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Account/Platform</h3>
+          <CompactCard title="Account/Platform">
             <div>
               <p className="font-medium text-gray-900">
                 {investment.account?.name || 'Unknown Account'}
@@ -351,12 +283,11 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                 </p>
               )}
             </div>
-          </div>
+          </CompactCard>
 
           {/* Price Status */}
           {isUnitBased && (
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Price Status</h3>
+            <CompactCard title="Price Status">
               <div className="space-y-2">
                 {currentPrice ? (
                   <div className="flex items-center text-green-600">
@@ -373,13 +304,11 @@ const InvestmentDetails: React.FC<InvestmentDetailsProps> = ({
                     Using buy price
                   </div>
                 )}
-                {lastPriceUpdate && (
-                  <p className="text-xs text-gray-500">
-                    Last updated: {lastPriceUpdate.toLocaleString()}
-                  </p>
-                )}
+                <p className="text-xs text-gray-500">
+                  Last updated: {lastPriceUpdate.toLocaleString()}
+                </p>
               </div>
-            </div>
+            </CompactCard>
           )}
         </div>
       </div>

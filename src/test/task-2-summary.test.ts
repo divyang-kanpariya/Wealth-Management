@@ -1,12 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { InvestmentType, AccountType } from '@prisma/client'
+import type { Investment, Goal, Account } from '../types'
 
 // Test that all sub-tasks for Task 2 are completed
 describe('Task 2: Core Data Models and Validation - Summary', () => {
   describe('Sub-task 1: TypeScript interfaces and types for all entities', () => {
     it('should have Investment type with all required properties', async () => {
-      const { Investment } = await import('../types')
-      
       // This test verifies that the Investment type exists and can be used
       const mockInvestment: Investment = {
         id: 'test-id',
@@ -24,8 +23,6 @@ describe('Task 2: Core Data Models and Validation - Summary', () => {
     })
 
     it('should have Goal type with all required properties', async () => {
-      const { Goal } = await import('../types')
-      
       const mockGoal: Goal = {
         id: 'test-id',
         name: 'Test Goal',
@@ -40,8 +37,6 @@ describe('Task 2: Core Data Models and Validation - Summary', () => {
     })
 
     it('should have Account type with all required properties', async () => {
-      const { Account } = await import('../types')
-      
       const mockAccount: Account = {
         id: 'test-id',
         name: 'Test Account',

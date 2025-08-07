@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import Modal from '../../../components/ui/Modal';
+import { Modal } from '@/components/ui';
 
 describe('Modal', () => {
   it('does not render when closed', () => {

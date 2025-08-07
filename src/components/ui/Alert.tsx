@@ -3,7 +3,7 @@ import React from 'react';
 export interface AlertProps {
   type?: 'success' | 'error' | 'warning' | 'info';
   title?: string;
-  message: string;
+  message: string | React.ReactNode;
   onClose?: () => void;
   className?: string;
 }

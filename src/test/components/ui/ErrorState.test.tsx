@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import ErrorState from '../../../components/ui/ErrorState';
+import { ErrorState } from '@/components/ui';
 
 describe('ErrorState', () => {
   it('renders with required message', () => {

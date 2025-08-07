@@ -3,14 +3,18 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import GoalList from '@/components/goals/GoalList';
 
 // Mock the components used by GoalList
-jest.mock('@/components/goals/GoalCard', () => {
-  return function MockGoalCard({ goal, onEdit, onDelete, onViewDetails }) {
+jest.mock('@/components/goals/GoalTable', () => {
+  return function MockGoalTable({ goals, onEdit, onDelete, onViewDetails }) {
     return (
-      <div data-testid={`goal-card-${goal.id}`}>
-        <div>{goal.name}</div>
-        <button onClick={() => onEdit()}>Edit</button>
-        <button onClick={() => onDelete()}>Delete</button>
-        <button onClick={() => onViewDetails()}>View Details</button>
+      <div data-testid="goal-table">
+        {goals.map((goal: any) => (
+          <div key={goal.id} data-testid={`goal-row-${goal.id}`}>
+            <div>{goal.name}</div>
+            <button onClick={() => onEdit(goal)}>Edit</button>
+            <button onClick={() => onDelete(goal)}>Delete</button>
+            <button onClick={() => onViewDetails(goal)}>View</button>
+          </div>
+        ))}
       </div>
     );
   };
@@ -93,8 +97,8 @@ describe('GoalList', () => {
     
     expect(screen.getByText('Financial Goals')).toBeInTheDocument();
     expect(screen.getByText('2 goals')).toBeInTheDocument();
-    expect(screen.getByTestId('goal-card-goal-1')).toBeInTheDocument();
-    expect(screen.getByTestId('goal-card-goal-2')).toBeInTheDocument();
+    expect(screen.getByTestId('goal-row-goal-1')).toBeInTheDocument();
+    expect(screen.getByTestId('goal-row-goal-2')).toBeInTheDocument();
   });
 
   it('renders empty state when no goals', async () => {
@@ -134,9 +138,9 @@ describe('GoalList', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
     
-    // Find the first goal card and click its edit button
-    const firstGoalCard = screen.getByTestId('goal-card-goal-1');
-    fireEvent.click(screen.getByText('Edit', { container: firstGoalCard }));
+    // Find the first goal row and click its edit button
+    const firstGoalRow = screen.getByTestId('goal-row-goal-1');
+    fireEvent.click(screen.getByText('Edit', { container: firstGoalRow }));
     
     expect(screen.getByTestId('modal')).toBeInTheDocument();
     expect(screen.getByText('Edit Goal')).toBeInTheDocument();
@@ -150,9 +154,9 @@ describe('GoalList', () => {
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
     
-    // Find the first goal card and click its delete button
-    const firstGoalCard = screen.getByTestId('goal-card-goal-1');
-    fireEvent.click(screen.getByText('Delete', { container: firstGoalCard }));
+    // Find the first goal row and click its delete button
+    const firstGoalRow = screen.getByTestId('goal-row-goal-1');
+    fireEvent.click(screen.getByText('Delete', { container: firstGoalRow }));
     
     expect(screen.getByTestId('modal')).toBeInTheDocument();
     expect(screen.getByText('Delete Goal')).toBeInTheDocument();

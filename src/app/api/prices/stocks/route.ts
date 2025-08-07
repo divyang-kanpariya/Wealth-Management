@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getPrice, batchGetPrices, getCachedPrice } from '@/lib/price-fetcher'
+import { getPrice, batchGetPrices, getCachedPrice, getPriceWithFallback } from '@/lib/price-fetcher'
 import { z } from 'zod'
 
 // Validation schemas
@@ -14,7 +14,9 @@ const batchStockSchema = z.object({
 const stockQuerySchema = z.object({
   symbol: z.string().nullable().optional(),
   symbols: z.string().nullable().optional(), // comma-separated symbols for batch requests
-  cached: z.string().nullable().optional().transform(val => val === 'true') // only return cached data
+  cached: z.string().nullable().optional().transform(val => val === 'true'), // only return cached data
+  enhanced: z.string().nullable().optional().transform(val => val === 'true'), // use enhanced fallback mechanism
+  forceRefresh: z.string().nullable().optional().transform(val => val === 'true') // force refresh even if cached
 })
 
 export async function GET(request: NextRequest) {
@@ -23,7 +25,9 @@ export async function GET(request: NextRequest) {
     const query = stockQuerySchema.parse({
       symbol: searchParams.get('symbol'),
       symbols: searchParams.get('symbols'),
-      cached: searchParams.get('cached')
+      cached: searchParams.get('cached'),
+      enhanced: searchParams.get('enhanced'),
+      forceRefresh: searchParams.get('forceRefresh')
     })
 
     // Handle batch request
@@ -98,6 +102,17 @@ export async function GET(request: NextRequest) {
           source: cached?.source || null,
           cached: true
         })
+      } else if (query.enhanced) {
+        // Use enhanced fallback mechanism
+        const result = await getPriceWithFallback(query.symbol, query.forceRefresh)
+        
+        return NextResponse.json({
+          symbol: query.symbol,
+          price: result.price,
+          source: result.source,
+          cached: result.cached,
+          fallbackUsed: result.fallbackUsed
+        })
       } else {
         // Fetch fresh data with caching using new Google Script API
         const price = await getPrice(query.symbol)
@@ -165,7 +180,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Validation error', details: validation.error.errors },
+        { error: 'Validation error', details: error.errors },
         { status: 400 }
       )
     }

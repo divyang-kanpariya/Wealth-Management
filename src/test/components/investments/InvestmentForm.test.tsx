@@ -44,8 +44,6 @@ const mockAccounts: Account[] = [
   },
 ];
 
-import { vi } from 'vitest';
-
 const mockOnSubmit = vi.fn();
 const mockOnCancel = vi.fn();
 

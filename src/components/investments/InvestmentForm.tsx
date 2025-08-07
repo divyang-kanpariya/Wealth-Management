@@ -4,7 +4,10 @@ import { investmentSchema } from '../../lib/validations';
 import { Investment, Goal, Account } from '../../types';
 import Input from '../ui/Input';
 import Select from '../ui/Select';
+import EnhancedSelect from '../ui/EnhancedSelect';
 import Button from '../ui/Button';
+import QuickActions from '../ui/QuickActions';
+import InlineGoalForm from '../goals/InlineGoalForm';
 import { z } from 'zod';
 
 interface InvestmentFormProps {
@@ -82,6 +85,8 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [visibleFields, setVisibleFields] = useState<string[]>([]);
+  const [availableGoals, setAvailableGoals] = useState<Goal[]>(goals);
+  const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
 
   // Initialize form data if editing
   useEffect(() => {
@@ -100,6 +105,11 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
       });
     }
   }, [investment]);
+
+  // Update available goals when goals prop changes
+  useEffect(() => {
+    setAvailableGoals(goals);
+  }, [goals]);
 
   // Update visible fields when investment type changes
   useEffect(() => {
@@ -147,6 +157,21 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     }
   };
 
+  const handleGoalCreated = (newGoal: Goal) => {
+    // Add the new goal to the available goals list
+    setAvailableGoals(prev => [...prev, newGoal]);
+    // Automatically select the newly created goal
+    setFormData(prev => ({ ...prev, goalId: newGoal.id }));
+  };
+
+  const handleOpenGoalModal = () => {
+    setIsGoalModalOpen(true);
+  };
+
+  const handleCloseGoalModal = () => {
+    setIsGoalModalOpen(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -161,7 +186,7 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
     }
   };
 
-  const goalOptions = goals.map(goal => ({
+  const goalOptions = availableGoals.map(goal => ({
     value: goal.id,
     label: goal.name,
   }));
@@ -174,181 +199,210 @@ const InvestmentForm: React.FC<InvestmentFormProps> = ({
   const isUnitBased = ['STOCK', 'MUTUAL_FUND', 'CRYPTO'].includes(formData.type);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Investment Type */}
-        <div className="md:col-span-2">
-          <Select
-            label="Investment Type"
-            value={formData.type}
-            onChange={(e) => handleInputChange('type', e.target.value as InvestmentType)}
-            options={INVESTMENT_TYPE_OPTIONS}
-            error={errors.type}
-            required
-          />
-        </div>
-
-        {/* Investment Name */}
-        {visibleFields.includes('name') && (
-          <Input
-            label="Investment Name"
-            type="text"
-            value={formData.name}
-            onChange={(e) => handleInputChange('name', e.target.value)}
-            error={errors.name}
-            placeholder="Enter investment name"
-            required
-          />
-        )}
-
-        {/* Symbol (for stocks, mutual funds, crypto) */}
-        {visibleFields.includes('symbol') && (
-          <Input
-            label={formData.type === 'STOCK' ? 'Stock Symbol' : 
-                   formData.type === 'MUTUAL_FUND' ? 'Scheme Code' : 'Symbol'}
-            type="text"
-            value={formData.symbol}
-            onChange={(e) => handleInputChange('symbol', e.target.value)}
-            error={errors.symbol}
-            placeholder={formData.type === 'STOCK' ? 'e.g., RELIANCE' : 
-                        formData.type === 'MUTUAL_FUND' ? 'e.g., 120503' : 'Enter symbol'}
-          />
-        )}
-
-        {/* Units (for unit-based investments) */}
-        {visibleFields.includes('units') && (
-          <Input
-            label={formData.type === 'STOCK' ? 'Number of Shares' : 
-                   formData.type === 'MUTUAL_FUND' ? 'Number of Units' : 'Quantity'}
-            type="number"
-            step="0.001"
-            min="0"
-            value={formData.units || ''}
-            onChange={(e) => handleInputChange('units', parseFloat(e.target.value) || undefined)}
-            error={errors.units}
-            placeholder="Enter quantity"
-            required={isUnitBased}
-          />
-        )}
-
-        {/* Buy Price (for unit-based investments) */}
-        {visibleFields.includes('buyPrice') && (
-          <Input
-            label={formData.type === 'STOCK' ? 'Price per Share (₹)' : 
-                   formData.type === 'MUTUAL_FUND' ? 'NAV (₹)' : 'Price per Unit (₹)'}
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.buyPrice || ''}
-            onChange={(e) => handleInputChange('buyPrice', parseFloat(e.target.value) || undefined)}
-            error={errors.buyPrice}
-            placeholder="Enter price"
-            required={isUnitBased}
-          />
-        )}
-
-        {/* Total Value (for non-unit investments) */}
-        {visibleFields.includes('totalValue') && (
-          <Input
-            label="Total Value (₹)"
-            type="number"
-            step="0.01"
-            min="0"
-            value={formData.totalValue || ''}
-            onChange={(e) => handleInputChange('totalValue', parseFloat(e.target.value) || undefined)}
-            error={errors.totalValue}
-            placeholder="Enter total value"
-            required={!isUnitBased}
-          />
-        )}
-
-        {/* Buy Date */}
-        {visibleFields.includes('buyDate') && (
-          <Input
-            label="Purchase Date"
-            type="date"
-            value={formData.buyDate}
-            onChange={(e) => handleInputChange('buyDate', e.target.value)}
-            error={errors.buyDate}
-            required
-          />
-        )}
-
-        {/* Goal Selection */}
-        {visibleFields.includes('goalId') && (
-          <Select
-            label="Financial Goal (Optional)"
-            value={formData.goalId || ''}
-            onChange={(e) => handleInputChange('goalId', e.target.value || undefined)}
-            options={[
-              { value: '', label: 'No specific goal' },
-              ...goalOptions
-            ]}
-            placeholder="Select a goal or leave unassigned"
-            error={errors.goalId}
-          />
-        )}
-
-        {/* Account Selection */}
-        {visibleFields.includes('accountId') && (
-          <Select
-            label="Account/Platform"
-            value={formData.accountId}
-            onChange={(e) => handleInputChange('accountId', e.target.value)}
-            options={accountOptions}
-            placeholder="Select an account"
-            error={errors.accountId}
-            required
-          />
-        )}
-
-        {/* Notes */}
-        {visibleFields.includes('notes') && (
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Investment Type */}
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Notes (Optional)
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => handleInputChange('notes', e.target.value)}
-              rows={3}
-              className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
-              placeholder="Add any additional notes..."
+            <Select
+              label="Investment Type"
+              value={formData.type}
+              onChange={(e) => handleInputChange('type', e.target.value as InvestmentType)}
+              options={INVESTMENT_TYPE_OPTIONS}
+              error={errors.type}
+              required
             />
           </div>
-        )}
-      </div>
 
-      {/* Calculated Values Display */}
-      {isUnitBased && formData.units && formData.buyPrice && (
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-700 mb-2">Calculated Values</h4>
-          <p className="text-sm text-gray-600">
-            Total Investment: ₹{(formData.units * formData.buyPrice).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
-          </p>
+          {/* Investment Name */}
+          {visibleFields.includes('name') && (
+            <Input
+              label="Investment Name"
+              type="text"
+              value={formData.name}
+              onChange={(e) => handleInputChange('name', e.target.value)}
+              error={errors.name}
+              placeholder="Enter investment name"
+              required
+            />
+          )}
+
+          {/* Symbol (for stocks, mutual funds, crypto) */}
+          {visibleFields.includes('symbol') && (
+            <Input
+              label={formData.type === 'STOCK' ? 'Stock Symbol' : 
+                     formData.type === 'MUTUAL_FUND' ? 'Scheme Code' : 'Symbol'}
+              type="text"
+              value={formData.symbol}
+              onChange={(e) => handleInputChange('symbol', e.target.value)}
+              error={errors.symbol}
+              placeholder={formData.type === 'STOCK' ? 'e.g., RELIANCE' : 
+                          formData.type === 'MUTUAL_FUND' ? 'e.g., 120503' : 'Enter symbol'}
+            />
+          )}
+
+          {/* Units (for unit-based investments) */}
+          {visibleFields.includes('units') && (
+            <Input
+              label={formData.type === 'STOCK' ? 'Number of Shares' : 
+                     formData.type === 'MUTUAL_FUND' ? 'Number of Units' : 'Quantity'}
+              type="number"
+              step="0.001"
+              min="0"
+              value={formData.units || ''}
+              onChange={(e) => handleInputChange('units', e.target.value ? parseFloat(e.target.value) : '')}
+              error={errors.units}
+              placeholder="Enter quantity"
+              required={isUnitBased}
+            />
+          )}
+
+          {/* Buy Price (for unit-based investments) */}
+          {visibleFields.includes('buyPrice') && (
+            <Input
+              label={formData.type === 'STOCK' ? 'Price per Share (₹)' : 
+                     formData.type === 'MUTUAL_FUND' ? 'NAV (₹)' : 'Price per Unit (₹)'}
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.buyPrice || ''}
+              onChange={(e) => handleInputChange('buyPrice', e.target.value ? parseFloat(e.target.value) : '')}
+              error={errors.buyPrice}
+              placeholder="Enter price"
+              required={isUnitBased}
+            />
+          )}
+
+          {/* Total Value (for non-unit investments) */}
+          {visibleFields.includes('totalValue') && (
+            <Input
+              label="Total Value (₹)"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.totalValue || ''}
+              onChange={(e) => handleInputChange('totalValue', e.target.value ? parseFloat(e.target.value) : '')}
+              error={errors.totalValue}
+              placeholder="Enter total value"
+              required={!isUnitBased}
+            />
+          )}
+
+          {/* Buy Date */}
+          {visibleFields.includes('buyDate') && (
+            <Input
+              label="Purchase Date"
+              type="date"
+              value={formData.buyDate}
+              onChange={(e) => handleInputChange('buyDate', e.target.value)}
+              error={errors.buyDate}
+              required
+            />
+          )}
+
+          {/* Goal Selection */}
+          {visibleFields.includes('goalId') && (
+            <EnhancedSelect
+              label="Financial Goal (Optional)"
+              value={formData.goalId || ''}
+              onChange={(value) => handleInputChange('goalId', value || '')}
+              options={goalOptions}
+              placeholder="Select a goal or leave unassigned"
+              error={errors.goalId}
+              allowCustom={true}
+              customOptionLabel="Create new goal"
+              onCustomOptionClick={handleOpenGoalModal}
+            />
+          )}
+
+          {/* Account Selection */}
+          {visibleFields.includes('accountId') && (
+            <Select
+              label="Account/Platform"
+              value={formData.accountId}
+              onChange={(e) => handleInputChange('accountId', e.target.value)}
+              options={accountOptions}
+              placeholder="Select an account"
+              error={errors.accountId}
+              required
+            />
+          )}
+
+          {/* Notes */}
+          {visibleFields.includes('notes') && (
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Notes (Optional)
+              </label>
+              <textarea
+                value={formData.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                rows={3}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                placeholder="Add any additional notes..."
+              />
+            </div>
+          )}
         </div>
-      )}
 
-      {/* Form Actions */}
-      <div className="flex justify-end space-x-4">
-        {onCancel && (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            Cancel
-          </Button>
+        {/* Calculated Values Display */}
+        {isUnitBased && formData.units && formData.buyPrice && (
+          <div className="bg-gray-50 p-4 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-700 mb-2">Calculated Values</h4>
+            <p className="text-sm text-gray-600">
+              Total Investment: ₹{(formData.units * formData.buyPrice).toLocaleString('en-IN', { maximumFractionDigits: 2 })}
+            </p>
+          </div>
         )}
-        <Button
-          type="submit"
-          disabled={isLoading}
-        >
-          {isLoading ? 'Saving...' : investment ? 'Update Investment' : 'Add Investment'}
-        </Button>
-      </div>
-    </form>
+
+        {/* Form Actions */}
+        <div className="flex justify-end">
+          <QuickActions
+            actions={[
+              ...(onCancel ? [{
+                id: 'cancel-form',
+                label: 'Cancel',
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ),
+                onClick: onCancel,
+                disabled: isLoading,
+                variant: 'secondary' as const
+              }] : []),
+              {
+                id: 'submit-form',
+                label: isLoading ? 'Saving...' : investment ? 'Update Investment' : 'Add Investment',
+                icon: (
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                ),
+                onClick: () => {
+                  const form = document.querySelector('form');
+                  if (form) {
+                    const event = new Event('submit', { bubbles: true, cancelable: true });
+                    form.dispatchEvent(event);
+                  }
+                },
+                disabled: isLoading,
+                variant: 'primary' as const
+              }
+            ]}
+            size="md"
+            layout="horizontal"
+          />
+        </div>
+      </form>
+
+      {/* Inline Goal Creation Modal */}
+      <InlineGoalForm
+        isOpen={isGoalModalOpen}
+        onClose={handleCloseGoalModal}
+        onGoalCreated={handleGoalCreated}
+      />
+    </>
   );
 };
 

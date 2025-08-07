@@ -1,15 +1,27 @@
 import React from 'react';
-import GoalDetails from '@/components/goals/GoalDetails';
+import { notFound } from 'next/navigation';
+import Layout from '@/components/layout/Layout';
+import GoalDetailsView from '@/components/goals/GoalDetailsView';
+import { GoalDetailDataPreparator } from '@/lib/server/data-preparators';
 
-export const metadata = {
-  title: 'Goal Details | Personal Wealth Management',
-  description: 'View and manage details of your financial goal',
-};
+interface PageProps {
+  params: Promise<{ id: string }>
+}
 
-export default function GoalDetailsPage({ params }: { params: { id: string } }) {
-  return (
-    <div className="container mx-auto px-4 py-8">
-      <GoalDetails goalId={params.id} />
-    </div>
-  );
+export default async function GoalDetailsPage({ params }: PageProps) {
+  const { id } = await params;
+  
+  try {
+    const preparator = new GoalDetailDataPreparator();
+    const pageData = await preparator.prepare(id);
+    
+    return (
+      <Layout>
+        <GoalDetailsView data={pageData} />
+      </Layout>
+    );
+  } catch (error) {
+    // If the goal is not found, show 404
+    notFound();
+  }
 }

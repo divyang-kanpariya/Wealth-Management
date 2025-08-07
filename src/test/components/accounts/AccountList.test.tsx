@@ -8,15 +8,19 @@ import { Account, AccountType, Investment } from '@/types';
 global.fetch = vi.fn();
 
 // Mock the child components
-vi.mock('@/components/accounts/AccountCard', () => ({
-  default: ({ account, totalValue, investmentCount, onEdit, onDelete, onViewDetails }: any) => (
-    <div data-testid="account-card">
-      <h3>{account.name}</h3>
-      <p>₹{totalValue.toLocaleString('en-IN')}</p>
-      <p>{investmentCount} investments</p>
-      <button onClick={onEdit}>Edit</button>
-      <button onClick={onDelete}>Delete</button>
-      <button onClick={onViewDetails}>View Details</button>
+vi.mock('@/components/accounts/AccountTable', () => ({
+  default: ({ accounts, onEdit, onDelete, onViewDetails }: any) => (
+    <div data-testid="account-table">
+      {accounts.map((account: any) => (
+        <div key={account.id} data-testid={`account-row-${account.id}`}>
+          <h3>{account.name}</h3>
+          <p>₹{account.totalValue.toLocaleString('en-IN')}</p>
+          <p>{account.investmentCount} investments</p>
+          <button onClick={() => onEdit(account)}>Edit</button>
+          <button onClick={() => onDelete(account)}>Delete</button>
+          <button onClick={() => onViewDetails(account)}>View Details</button>
+        </div>
+      ))}
     </div>
   )
 }));
