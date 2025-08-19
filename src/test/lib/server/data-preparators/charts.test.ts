@@ -28,8 +28,7 @@ vi.mock('@/lib/prisma', () => ({
 
 // Mock price fetcher
 vi.mock('@/lib/price-fetcher', () => ({
-  batchGetPrices: vi.fn().mockResolvedValue([]),
-  batchGetMutualFundNAVs: vi.fn().mockResolvedValue([])
+  batchGetPrices: vi.fn().mockResolvedValue([])
 }))
 
 // Mock calculations

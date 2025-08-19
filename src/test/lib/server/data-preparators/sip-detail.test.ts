@@ -32,7 +32,7 @@ vi.mock('@/lib/calculations', () => ({
 }))
 
 vi.mock('@/lib/price-fetcher', () => ({
-  batchGetMutualFundNAVs: vi.fn(),
+  batchGetPrices: vi.fn(),
 }))
 
 describe('SIPDetailDataPreparator', () => {

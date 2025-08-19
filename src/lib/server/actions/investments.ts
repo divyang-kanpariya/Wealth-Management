@@ -1,15 +1,11 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
-import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { 
-  validateInvestment, 
-  validateUpdateInvestment,
-  investmentSchema,
-  updateInvestmentSchema 
+import {
+  validateInvestment,
+  validateUpdateInvestment
 } from '@/lib/validations'
-import { CacheInvalidation } from '../cache-invalidation'
+
 
 export type InvestmentActionResult = {
   success: boolean
@@ -38,14 +34,14 @@ export async function createInvestment(formData: FormData): Promise<InvestmentAc
 
     // Validate the data
     const validatedData = validateInvestment(data)
-    
+
     // Transform null values to undefined for Prisma and remove undefined fields
     const { goalId, ...restData } = validatedData
     const transformedData = {
       ...restData,
       ...(goalId && goalId !== null ? { goalId } : {})
     }
-    
+
     // Create the investment
     const investment = await prisma.investment.create({
       data: transformedData as any,
@@ -54,10 +50,9 @@ export async function createInvestment(formData: FormData): Promise<InvestmentAc
         account: true,
       },
     })
-    
-    // Invalidate caches
-    CacheInvalidation.invalidateInvestments()
-    
+
+    // No cache invalidation needed - user data is always fetched fresh
+
     return {
       success: true,
       data: investment
@@ -77,14 +72,14 @@ export async function createInvestment(formData: FormData): Promise<InvestmentAc
 export async function createInvestmentFromData(data: any): Promise<InvestmentActionResult> {
   try {
     const validatedData = validateInvestment(data)
-    
+
     // Transform null values to undefined for Prisma and remove undefined fields
     const { goalId, ...restData } = validatedData
     const transformedData = {
       ...restData,
       ...(goalId && goalId !== null ? { goalId } : {})
     }
-    
+
     const investment = await prisma.investment.create({
       data: transformedData as any,
       include: {
@@ -92,9 +87,9 @@ export async function createInvestmentFromData(data: any): Promise<InvestmentAct
         account: true,
       },
     })
-    
-    CacheInvalidation.invalidateInvestments()
-    
+
+    // No cache invalidation needed - user data is always fetched fresh
+
     return {
       success: true,
       data: investment
@@ -134,13 +129,13 @@ export async function updateInvestment(id: string, formData: FormData): Promise<
 
     // Validate the data
     const validatedData = validateUpdateInvestment(cleanData)
-    
+
     // Transform null values to undefined for Prisma
     const transformedData = {
       ...validatedData,
       goalId: validatedData.goalId === null ? undefined : validatedData.goalId,
     }
-    
+
     // Update the investment
     const updatedInvestment = await prisma.investment.update({
       where: { id },
@@ -150,10 +145,9 @@ export async function updateInvestment(id: string, formData: FormData): Promise<
         account: true,
       },
     })
-    
-    // Invalidate caches
-    CacheInvalidation.invalidateInvestments()
-    
+
+    // No cache invalidation needed - user data is always fetched fresh
+
     return {
       success: true,
       data: updatedInvestment
@@ -173,13 +167,13 @@ export async function updateInvestment(id: string, formData: FormData): Promise<
 export async function updateInvestmentFromData(id: string, data: any): Promise<InvestmentActionResult> {
   try {
     const validatedData = validateUpdateInvestment(data)
-    
+
     // Transform null values to undefined for Prisma
     const transformedData = {
       ...validatedData,
       goalId: validatedData.goalId === null ? undefined : validatedData.goalId,
     }
-    
+
     const updatedInvestment = await prisma.investment.update({
       where: { id },
       data: transformedData,
@@ -188,9 +182,9 @@ export async function updateInvestmentFromData(id: string, data: any): Promise<I
         account: true,
       },
     })
-    
-    CacheInvalidation.invalidateInvestments()
-    
+
+    // No cache invalidation needed - user data is always fetched fresh
+
     return {
       success: true,
       data: updatedInvestment
@@ -212,10 +206,9 @@ export async function deleteInvestment(id: string): Promise<InvestmentActionResu
     await prisma.investment.delete({
       where: { id },
     })
-    
-    // Invalidate caches
-    CacheInvalidation.invalidateInvestments()
-    
+
+    // No cache invalidation needed - user data is always fetched fresh
+
     return {
       success: true
     }
@@ -240,10 +233,9 @@ export async function bulkDeleteInvestments(ids: string[]): Promise<InvestmentAc
         }
       }
     })
-    
-    // Invalidate caches
-    CacheInvalidation.invalidateInvestments()
-    
+
+    // No cache invalidation needed - user data is always fetched fresh
+
     return {
       success: true,
       data: { deletedCount: ids.length }
@@ -270,11 +262,9 @@ export async function updateInvestmentGoal(investmentId: string, goalId: string 
         account: true,
       },
     })
-    
-    // Invalidate caches
-    CacheInvalidation.invalidateInvestments()
-    CacheInvalidation.invalidateGoals()
-    
+
+    // No cache invalidation needed - user data is always fetched fresh
+
     return {
       success: true,
       data: updatedInvestment

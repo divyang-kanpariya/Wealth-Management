@@ -23,42 +23,16 @@ export abstract class OptimizedDataPreparator<T extends PageDataBase> extends Ba
 
   async prepare(...args: any[]): Promise<T> {
     const pageStartTime = performance.now()
-    const { cacheKey, pageName, enableStaleWhileRevalidate = true } = this.options
+    const { pageName } = this.options
     
     try {
-      // Try to get cached data first
-      const cachedData = this.cache.get(cacheKey)
-      if (cachedData) {
-        const renderTime = performance.now() - pageStartTime
-        performanceMonitor.trackPageGeneration(pageName, 0, renderTime, true)
-        console.log(`[${this.constructor.name}] Cache HIT - served in ${renderTime.toFixed(2)}ms`)
-        return cachedData as T
-      }
-
-      // Check for stale data if enabled
-      if (enableStaleWhileRevalidate) {
-        const staleData = this.cache.getStale(cacheKey)
-        if (staleData) {
-          const renderTime = performance.now() - pageStartTime
-          performanceMonitor.trackPageGeneration(pageName, 0, renderTime, true)
-          console.log(`[${this.constructor.name}] Serving stale data while revalidating - served in ${renderTime.toFixed(2)}ms`)
-          
-          // Refresh in background
-          this.refreshInBackground(args).catch(error => {
-            console.error(`[${this.constructor.name}] Background refresh failed:`, error)
-          })
-          
-          return staleData as T
-        }
-      }
-
-      // Fetch fresh data
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[${this.constructor.name}] Fetching fresh user data (no cache)`)
       const dataStartTime = performance.now()
       const freshData = await this.fetchFreshData(...args)
       const dataPreparationTime = performance.now() - dataStartTime
 
-      // Cache the result
-      this.cache.set(cacheKey, freshData)
+      // No caching for user data - always serve fresh data
 
       const totalTime = performance.now() - pageStartTime
       const renderTime = totalTime - dataPreparationTime
@@ -70,16 +44,7 @@ export abstract class OptimizedDataPreparator<T extends PageDataBase> extends Ba
     } catch (error) {
       console.error(`[${this.constructor.name}] Data preparation failed:`, error)
       
-      // Try to return stale data as fallback
-      const staleData = this.cache.getStale(cacheKey)
-      if (staleData) {
-        const renderTime = performance.now() - pageStartTime
-        performanceMonitor.trackPageGeneration(pageName, 0, renderTime, true)
-        console.log(`[${this.constructor.name}] Error occurred, serving stale data as fallback`)
-        return staleData as T
-      }
-      
-      // Last resort: return fallback data
+      // Return fallback data - no stale cache fallback for user data
       const fallbackData = await this.getFallbackData()
       const totalTime = performance.now() - pageStartTime
       performanceMonitor.trackPageGeneration(pageName, totalTime, 0, false)
@@ -87,23 +52,18 @@ export abstract class OptimizedDataPreparator<T extends PageDataBase> extends Ba
     }
   }
 
+  // Background refresh not needed - user data is always fetched fresh
   private async refreshInBackground(args: any[]): Promise<void> {
-    return withPerformanceTracking(`${this.constructor.name}.backgroundRefresh`, async () => {
-      const freshData = await this.fetchFreshData(...args)
-      this.cache.set(this.options.cacheKey, freshData)
-      console.log(`[${this.constructor.name}] Background refresh completed`)
-    }, {}, [this.options.pageName, 'background-refresh'])
+    console.log(`[${this.constructor.name}] Background refresh not needed - user data always fresh`)
   }
 
   // Abstract methods to be implemented by subclasses
   protected abstract fetchFreshData(...args: any[]): Promise<T>
   protected abstract getFallbackData(): Promise<T>
 
-  // Utility methods
+  // No cache invalidation needed - user data is always fetched fresh
   invalidateCache(): void {
-    const stats = this.cache.getStats()
-    this.cache.invalidate(this.options.cacheKey)
-    console.log(`[${this.constructor.name}] Cache invalidated (hit rate: ${stats.hitRate.toFixed(2)}%)`)
+    console.log(`[${this.constructor.name}] No cache invalidation needed - user data always fresh`)
   }
 
   getPerformanceStats() {

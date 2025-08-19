@@ -11,7 +11,7 @@ import {
   Account,
   SIPSummary
 } from '@/types'
-import { unstable_cache } from 'next/cache'
+
 
 export interface SIPsPageData extends PageDataBase {
   sips: SIP[]
@@ -28,45 +28,21 @@ export class SIPsDataPreparator extends BaseDataPreparator {
     const startTime = Date.now()
     
     try {
-      // Use Next.js unstable_cache for database queries
-      const getCachedSIPs = unstable_cache(
-        async () => this.fetchSIPs(),
-        ['sips-list'],
-        { 
-          revalidate: 300, // 5 minutes
-          tags: ['sips']
-        }
-      )
-
-      const getCachedGoals = unstable_cache(
-        async () => this.fetchGoals(),
-        ['sips-goals'],
-        { 
-          revalidate: 300, // 5 minutes
-          tags: ['goals']
-        }
-      )
-
-      const getCachedAccounts = unstable_cache(
-        async () => this.fetchAccounts(),
-        ['sips-accounts'],
-        { 
-          revalidate: 300, // 5 minutes
-          tags: ['accounts']
-        }
-      )
-
-      // Fetch all required data in parallel with caching
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[SIPsDataPreparator] Fetching fresh user data (no cache)`)
       const [sips, goals, accounts] = await Promise.all([
-        getCachedSIPs(),
-        getCachedGoals(),
-        getCachedAccounts()
+        this.fetchSIPs(),
+        this.fetchGoals(),
+        this.fetchAccounts()
       ])
+
+      // Check if force refresh is requested
+      const forceRefresh = (global as any).forceRefreshPrices || false
 
       // Get price data for all SIPs (mutual fund NAVs)
       let priceData: Map<string, number>
       try {
-        priceData = await this.fetchPriceData([], sips)
+        priceData = await this.fetchPriceData([], sips, forceRefresh)
       } catch (priceError) {
         console.error('Price data fetch failed, using empty price data:', priceError)
         priceData = new Map()
@@ -86,7 +62,7 @@ export class SIPsDataPreparator extends BaseDataPreparator {
       // Calculate summary statistics
       const summary = calculateSipSummary(sipsWithValues)
 
-      console.log(`[SIPsDataPreparator] Data prepared in ${Date.now() - startTime}ms`)
+      console.log(`[SIPsDataPreparator] Fresh data prepared in ${Date.now() - startTime}ms`)
 
       return {
         timestamp: new Date(),
@@ -178,9 +154,8 @@ export class SIPsDataPreparator extends BaseDataPreparator {
     }
   }
 
-  // Method to invalidate cache when data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(): void {
-    // This would be called when SIPs are created/updated/deleted
-    console.log('[SIPsDataPreparator] Cache invalidated')
+    console.log('[SIPsDataPreparator] No cache invalidation needed - user data always fresh')
   }
 }

@@ -8,7 +8,7 @@ import {
   Goal, 
   Account
 } from '@/types'
-import { unstable_cache } from 'next/cache'
+
 import { notFound } from 'next/navigation'
 
 export interface SIPDetailPageData extends PageDataBase {
@@ -32,58 +32,17 @@ export class SIPDetailDataPreparator extends BaseDataPreparator {
       let goals: any[]
       let accounts: any[]
 
-      try {
-        // Use Next.js unstable_cache for database queries
-        const getCachedSIP = unstable_cache(
-          async () => this.fetchSIP(sipId),
-          [`sip-detail-${sipId}`],
-          { 
-            revalidate: 300, // 5 minutes
-            tags: ['sips', `sip-${sipId}`]
-          }
-        )
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[SIPDetailDataPreparator] Fetching fresh user data (no cache)`)
+      const [sipResult, goalsResult, accountsResult] = await Promise.all([
+        this.fetchSIP(sipId),
+        this.fetchGoals(),
+        this.fetchAccounts()
+      ])
 
-        const getCachedGoals = unstable_cache(
-          async () => this.fetchGoals(),
-          ['sip-detail-goals'],
-          { 
-            revalidate: 300, // 5 minutes
-            tags: ['goals']
-          }
-        )
-
-        const getCachedAccounts = unstable_cache(
-          async () => this.fetchAccounts(),
-          ['sip-detail-accounts'],
-          { 
-            revalidate: 300, // 5 minutes
-            tags: ['accounts']
-          }
-        )
-
-        // Fetch all data in parallel with caching
-        const [sipResult, goalsResult, accountsResult] = await Promise.all([
-          getCachedSIP(),
-          getCachedGoals(),
-          getCachedAccounts()
-        ])
-
-        sipData = sipResult
-        goals = goalsResult
-        accounts = accountsResult
-      } catch (cacheError) {
-        // Fallback to direct database queries if caching fails (e.g., in tests)
-        console.log('Cache unavailable, using direct database queries')
-        const [sipResult, goalsResult, accountsResult] = await Promise.all([
-          this.fetchSIP(sipId),
-          this.fetchGoals(),
-          this.fetchAccounts()
-        ])
-
-        sipData = sipResult
-        goals = goalsResult
-        accounts = accountsResult
-      }
+      sipData = sipResult
+      goals = goalsResult
+      accounts = accountsResult
       
       if (!sipData) {
         notFound()
@@ -96,13 +55,16 @@ export class SIPDetailDataPreparator extends BaseDataPreparator {
       const transformedGoals = this.transformGoals(goals)
       const transformedAccounts = this.transformAccounts(accounts)
 
+      // Check if force refresh is requested
+      const forceRefresh = (global as any).forceRefreshPrices || false
+
       // Get price data for this SIP if it has a symbol (mutual fund NAV)
       let priceData: Map<string, number>
       let currentPrice: number | undefined
       
       try {
         if (sipData.symbol) {
-          priceData = await this.fetchPriceData([], [sipData])
+          priceData = await this.fetchPriceData([], [sipData], forceRefresh)
           currentPrice = priceData.get(sipData.symbol)
         } else {
           priceData = new Map()
@@ -118,7 +80,7 @@ export class SIPDetailDataPreparator extends BaseDataPreparator {
       // Calculate SIP value with current price
       const sipWithValue = calculateSipValue(transformedSip, transformedTransactions, currentPrice)
 
-      console.log(`[SIPDetailDataPreparator] Data prepared in ${Date.now() - startTime}ms`)
+      console.log(`[SIPDetailDataPreparator] Fresh data prepared in ${Date.now() - startTime}ms`)
 
       return {
         timestamp: new Date(),
@@ -223,8 +185,8 @@ export class SIPDetailDataPreparator extends BaseDataPreparator {
     }))
   }
 
-  // Method to invalidate cache when SIP data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(sipId: string): void {
-    console.log(`[SIPDetailDataPreparator] Cache invalidated for SIP ${sipId}`)
+    console.log(`[SIPDetailDataPreparator] No cache invalidation needed - user data always fresh`)
   }
 }

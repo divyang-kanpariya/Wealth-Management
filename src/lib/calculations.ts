@@ -469,3 +469,113 @@ export function validateSipData(sip: SIP): { isValid: boolean; errors: string[] 
     errors
   }
 }
+
+/**
+ * Calculate future value adjusted for inflation
+ */
+export function calculateInflationAdjustedValue(
+  presentValue: number,
+  inflationRate: number,
+  years: number
+): number {
+  return presentValue * Math.pow(1 + inflationRate / 100, years)
+}
+
+/**
+ * Calculate present value from future value (reverse inflation adjustment)
+ */
+export function calculatePresentValue(
+  futureValue: number,
+  inflationRate: number,
+  years: number
+): number {
+  return futureValue / Math.pow(1 + inflationRate / 100, years)
+}
+
+/**
+ * Calculate real purchasing power of future amount in today's terms
+ */
+export function calculateRealValue(
+  futureAmount: number,
+  inflationRate: number,
+  years: number
+): number {
+  return calculatePresentValue(futureAmount, inflationRate, years)
+}
+
+/**
+ * Calculate inflation impact summary
+ */
+export function calculateInflationImpact(
+  amount: number,
+  inflationRate: number,
+  years: number
+): {
+  presentValue: number
+  futureValue: number
+  realValue: number
+  inflationLoss: number
+  inflationLossPercentage: number
+} {
+  const presentValue = amount
+  const futureValue = calculateInflationAdjustedValue(amount, inflationRate, years)
+  const realValue = calculateRealValue(futureValue, inflationRate, years)
+  const inflationLoss = futureValue - realValue
+  const inflationLossPercentage = futureValue > 0 ? (inflationLoss / futureValue) * 100 : 0
+  
+  return {
+    presentValue,
+    futureValue,
+    realValue,
+    inflationLoss,
+    inflationLossPercentage
+  }
+}
+
+/**
+ * Calculate goal progress with inflation adjustment
+ */
+export function calculateGoalProgressWithInflation(
+  goal: Goal,
+  investmentsWithValues: InvestmentWithCurrentValue[],
+  inflationRate: number = 6
+): GoalProgress & {
+  inflationAdjustedTarget: number
+  realCurrentValue: number
+  realProgress: number
+  yearsToTarget: number
+} {
+  const baseProgress = calculateGoalProgress(goal, investmentsWithValues)
+  
+  // Calculate years to target
+  const targetDate = new Date(goal.targetDate)
+  const currentDate = new Date()
+  const yearsToTarget = Math.max(0, (targetDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25))
+  
+  // Calculate inflation-adjusted target amount
+  const inflationAdjustedTarget = calculateInflationAdjustedValue(
+    goal.targetAmount,
+    inflationRate,
+    yearsToTarget
+  )
+  
+  // Calculate real value of current investments in today's purchasing power
+  const realCurrentValue = calculateRealValue(
+    baseProgress.currentValue,
+    inflationRate,
+    yearsToTarget
+  )
+  
+  // Calculate real progress (current value vs inflation-adjusted target)
+  const realProgress = inflationAdjustedTarget > 0 
+    ? (baseProgress.currentValue / inflationAdjustedTarget) * 100 
+    : 0
+  
+  return {
+    ...baseProgress,
+    inflationAdjustedTarget,
+    realCurrentValue,
+    realProgress: Math.min(100, realProgress),
+    yearsToTarget
+  }
+}

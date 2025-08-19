@@ -9,7 +9,6 @@ import {
 } from '@/lib/calculations'
 import { BaseDataPreparator, PageDataBase } from './base'
 import { DashboardSummary, PortfolioSummary, GoalProgress, InvestmentWithCurrentValue, SIPWithCurrentValue, SIPSummary } from '@/types'
-import { unstable_cache } from 'next/cache'
 import { dashboardCache, createOptimizedCache } from '../performance/cache-manager'
 import { parallelFetcher } from '../performance/parallel-fetcher'
 import { queryOptimizer } from '../performance/query-optimizer'
@@ -49,61 +48,24 @@ export class DashboardDataPreparator extends BaseDataPreparator {
     const pageStartTime = performance.now()
     
     try {
-      // Try to get fresh data from cache
-      const cachedData = dashboardCache.get(this.CACHE_KEY)
-      if (cachedData && typeof cachedData === 'object' && 'portfolioSummary' in cachedData) {
-        const renderTime = performance.now() - pageStartTime
-        performanceMonitor.trackPageGeneration('dashboard', 0, renderTime, true)
-        console.log(`[DashboardDataPreparator] Cache HIT - served in ${renderTime.toFixed(2)}ms`)
-        return cachedData as DashboardPageData
-      }
-
-      // Check if we have stale data while we fetch fresh data
-      const staleData = dashboardCache.getStale(this.CACHE_KEY)
-      
-      // If we have stale data, return it immediately and refresh in background
-      if (staleData && typeof staleData === 'object' && 'portfolioSummary' in staleData) {
-        const renderTime = performance.now() - pageStartTime
-        performanceMonitor.trackPageGeneration('dashboard', 0, renderTime, true)
-        console.log(`[DashboardDataPreparator] Serving stale data while revalidating - served in ${renderTime.toFixed(2)}ms`)
-        
-        // Refresh in background (don't await)
-        this.refreshDataInBackground().catch(error => {
-          console.error('Background refresh failed:', error)
-        })
-        
-        return staleData as DashboardPageData
-      }
-
-      // No cached data available, fetch fresh data
-      console.log(`[DashboardDataPreparator] Cache MISS - fetching fresh data`)
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      // Only pricing data will be cached separately
+      console.log(`[DashboardDataPreparator] Fetching fresh user data (no cache)`)
       const dataStartTime = performance.now()
       const freshData = await this.fetchFreshData()
       const dataPreparationTime = performance.now() - dataStartTime
-      
-      // Cache the fresh data
-      dashboardCache.set(this.CACHE_KEY, freshData)
       
       const totalTime = performance.now() - pageStartTime
       const renderTime = totalTime - dataPreparationTime
       performanceMonitor.trackPageGeneration('dashboard', dataPreparationTime, renderTime, false)
       
-      console.log(`[DashboardDataPreparator] Fresh data fetched and cached in ${totalTime.toFixed(2)}ms (data: ${dataPreparationTime.toFixed(2)}ms, render: ${renderTime.toFixed(2)}ms)`)
+      console.log(`[DashboardDataPreparator] Fresh data fetched in ${totalTime.toFixed(2)}ms (data: ${dataPreparationTime.toFixed(2)}ms, render: ${renderTime.toFixed(2)}ms)`)
       return freshData
 
     } catch (error) {
       console.error('Dashboard data preparation failed:', error)
       
-      // Try to return stale data as fallback
-      const staleData = dashboardCache.getStale(this.CACHE_KEY)
-      if (staleData && typeof staleData === 'object' && 'portfolioSummary' in staleData) {
-        const renderTime = performance.now() - pageStartTime
-        performanceMonitor.trackPageGeneration('dashboard', 0, renderTime, true)
-        console.log(`[DashboardDataPreparator] Error occurred, serving stale data as fallback`)
-        return staleData as DashboardPageData
-      }
-      
-      // Last resort: return minimal fallback data
+      // Return minimal fallback data
       const fallbackData = await this.getFallbackData()
       const totalTime = performance.now() - pageStartTime
       performanceMonitor.trackPageGeneration('dashboard', totalTime, 0, false)
@@ -111,13 +73,7 @@ export class DashboardDataPreparator extends BaseDataPreparator {
     }
   }
 
-  private async refreshDataInBackground(): Promise<void> {
-    return withPerformanceTracking('DashboardDataPreparator.backgroundRefresh', async () => {
-      const freshData = await this.fetchFreshData()
-      dashboardCache.set(this.CACHE_KEY, freshData)
-      console.log(`[DashboardDataPreparator] Background refresh completed`)
-    }, {}, ['dashboard', 'background-refresh'])
-  }
+
 
   private async fetchFreshData(): Promise<DashboardPageData> {
     return withPerformanceTracking('DashboardDataPreparator.fetchFreshData', async () => {
@@ -131,18 +87,26 @@ export class DashboardDataPreparator extends BaseDataPreparator {
     let hasErrors = false
 
     try {
-      // Use optimized parallel fetching with error handling
+      // Always fetch fresh user data from database - no caching for user CRUD operations
       const fetchResults = await this.safeDbOperation(
-        () => parallelFetcher.fetchDashboardData(),
-        'fetchDashboardData',
         async () => {
-          // Fallback: fetch data individually
-          console.warn('Parallel fetch failed, falling back to individual queries')
           const [investments, goals, sips, accounts] = await Promise.allSettled([
-            prisma.investment.findMany({ include: { account: true, goal: true } }),
-            prisma.goal.findMany({ include: { investments: true } }),
-            prisma.sIP.findMany({ include: { account: true, goal: true, transactions: true } }),
-            prisma.account.findMany({ include: { investments: true } })
+            prisma.investment.findMany({ 
+              include: { account: true, goal: true },
+              orderBy: { createdAt: 'desc' }
+            }),
+            prisma.goal.findMany({ 
+              include: { investments: true },
+              orderBy: { targetDate: 'asc' }
+            }),
+            prisma.sIP.findMany({ 
+              include: { account: true, goal: true, transactions: true },
+              orderBy: { createdAt: 'desc' }
+            }),
+            prisma.account.findMany({ 
+              include: { investments: true },
+              orderBy: { name: 'asc' }
+            })
           ])
           
           return {
@@ -150,6 +114,17 @@ export class DashboardDataPreparator extends BaseDataPreparator {
             goals: { data: goals.status === 'fulfilled' ? goals.value : [], error: goals.status === 'rejected' ? goals.reason : null, duration: 0 },
             sips: { data: sips.status === 'fulfilled' ? sips.value : [], error: sips.status === 'rejected' ? sips.reason : null, duration: 0 },
             accounts: { data: accounts.status === 'fulfilled' ? accounts.value : [], error: accounts.status === 'rejected' ? accounts.reason : null, duration: 0 }
+          }
+        },
+        'fetchDashboardData',
+        async () => {
+          // Fallback: return empty data
+          console.warn('Dashboard data fetch failed, returning empty data')
+          return {
+            investments: { data: [], error: null, duration: 0 },
+            goals: { data: [], error: null, duration: 0 },
+            sips: { data: [], error: null, duration: 0 },
+            accounts: { data: [], error: null, duration: 0 }
           }
         }
       )
@@ -175,11 +150,14 @@ export class DashboardDataPreparator extends BaseDataPreparator {
       const goals = Array.isArray(fetchResults.goals.data) ? fetchResults.goals.data : []
       const sips = Array.isArray(fetchResults.sips.data) ? fetchResults.sips.data : []
 
+      // Check if force refresh is requested
+      const forceRefresh = (global as any).forceRefreshPrices || false
+
       // Get price data for all investments and SIPs with graceful degradation
       const priceData = await this.safeCalculation(
         () => withPerformanceTracking('DashboardDataPreparator.fetchPriceData', 
-          () => this.fetchPriceData(investments, sips),
-          { investmentCount: investments.length, sipCount: sips.length },
+          () => this.fetchPriceData(investments, sips, forceRefresh),
+          { investmentCount: investments.length, sipCount: sips.length, forceRefresh },
           ['dashboard', 'price-fetch']
         ),
         'fetchPriceData',
@@ -319,17 +297,19 @@ export class DashboardDataPreparator extends BaseDataPreparator {
     }
   }
 
-  // Method to invalidate cache when data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(): void {
-    const stats = dashboardCache.getStats()
-    dashboardCache.invalidate() // Clear all cache entries to ensure fresh data
-    console.log(`[DashboardDataPreparator] Cache invalidated (${stats.totalEntries} entries removed, hit rate: ${stats.hitRate.toFixed(2)}%)`)
+    console.log(`[DashboardDataPreparator] No cache invalidation needed - user data always fresh`)
   }
 
-  // Method to force refresh
+  // Method to force refresh (only affects pricing data)
   async forceRefresh(): Promise<DashboardPageData> {
-    dashboardCache.invalidate(this.CACHE_KEY)
-    return this.prepare()
+    // Set global flag to force refresh pricing data
+    ;(global as any).forceRefreshPrices = true
+    const result = await this.prepare()
+    // Reset flag after use
+    ;(global as any).forceRefreshPrices = false
+    return result
   }
 
   // Get performance statistics

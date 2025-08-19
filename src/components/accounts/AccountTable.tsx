@@ -181,7 +181,7 @@ const AccountTable: React.FC<AccountTableProps> = ({
     <DropdownMenu
       items={getActionItems(account)}
       size="sm"
-      placement="bottom-right"
+      placement="auto"
     />
   );
 

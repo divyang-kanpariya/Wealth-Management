@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { BaseDataPreparator, PageDataBase } from './base'
 import { Account, Investment } from '@/types'
-import { unstable_cache } from 'next/cache'
 import { notFound } from 'next/navigation'
 
 export interface AccountWithInvestments extends Account {
@@ -19,18 +18,9 @@ export class AccountDetailDataPreparator extends BaseDataPreparator {
     const startTime = Date.now()
     
     try {
-      // Use Next.js unstable_cache for database queries
-      const getCachedAccount = unstable_cache(
-        async () => this.fetchAccount(accountId),
-        [`account-detail-${accountId}`],
-        { 
-          revalidate: 300, // 5 minutes
-          tags: ['accounts', 'investments', `account-${accountId}`]
-        }
-      )
-
-      // Fetch account data
-      const account = await getCachedAccount()
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[AccountDetailDataPreparator] Fetching fresh user data (no cache)`)
+      const account = await this.fetchAccount(accountId)
       
       if (!account) {
         notFound()
@@ -42,7 +32,7 @@ export class AccountDetailDataPreparator extends BaseDataPreparator {
       // Calculate account totals
       const accountWithTotals = this.calculateAccountTotals(transformedAccount)
 
-      console.log(`[AccountDetailDataPreparator] Data prepared in ${Date.now() - startTime}ms`)
+      console.log(`[AccountDetailDataPreparator] Fresh data prepared in ${Date.now() - startTime}ms`)
 
       return {
         timestamp: new Date(),
@@ -114,8 +104,8 @@ export class AccountDetailDataPreparator extends BaseDataPreparator {
     }
   }
 
-  // Method to invalidate cache when account data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(accountId: string): void {
-    console.log(`[AccountDetailDataPreparator] Cache invalidated for account ${accountId}`)
+    console.log(`[AccountDetailDataPreparator] No cache invalidation needed - user data always fresh`)
   }
 }

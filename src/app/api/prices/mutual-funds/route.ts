@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCachedPrice, fetchMutualFundNAV, getMutualFundNAV, batchGetMutualFundNAVs, getMutualFundNAVWithFallback } from '@/lib/price-fetcher'
+import { getCachedPrice, getPrice, batchGetPrices, getPriceWithFallback } from '@/lib/price-fetcher'
 import { z } from 'zod'
 
 // Validation schemas
@@ -32,13 +32,12 @@ export async function GET(request: NextRequest) {
       forceRefresh: searchParams.get('forceRefresh')
     })
 
-    // Handle request for all mutual fund data
+    // Handle request for all mutual fund data - deprecated functionality
     if (query.all) {
-      const allNavData = await fetchMutualFundNAV()
-      return NextResponse.json({ 
-        data: allNavData,
-        count: allNavData.length 
-      })
+      return NextResponse.json({
+        error: 'Bulk mutual fund data fetching is no longer supported. Please specify scheme codes.',
+        message: 'Use the schemeCodes parameter to fetch specific mutual fund NAVs'
+      }, { status: 400 })
     }
 
     // Handle batch request
@@ -79,12 +78,12 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({ data: results })
       } else {
-        // Fetch fresh NAV data
-        const results = await batchGetMutualFundNAVs(schemeCodeArray)
+        // Fetch fresh NAV data using unified API
+        const results = await batchGetPrices(schemeCodeArray)
         const formattedResults = results.map(result => ({
-          schemeCode: result.schemeCode,
-          nav: result.nav,
-          source: result.nav ? 'AMFI' : null,
+          schemeCode: result.symbol,
+          nav: result.price,
+          source: result.price ? 'GOOGLE_SCRIPT' : null,
           cached: false,
           error: result.error
         }))
@@ -115,24 +114,24 @@ export async function GET(request: NextRequest) {
           cached: true
         })
       } else if (query.enhanced) {
-        // Use enhanced fallback mechanism
-        const result = await getMutualFundNAVWithFallback(query.schemeCode, query.forceRefresh)
+        // Use enhanced fallback mechanism with unified API
+        const result = await getPriceWithFallback(query.schemeCode, query.forceRefresh)
         
         return NextResponse.json({
           schemeCode: query.schemeCode,
-          nav: result.nav,
+          nav: result.price,
           source: result.source,
           cached: result.cached,
           fallbackUsed: result.fallbackUsed
         })
       } else {
-        // Fetch fresh NAV data
+        // Fetch fresh NAV data using unified API
         try {
-          const nav = await getMutualFundNAV(query.schemeCode)
+          const nav = await getPrice(query.schemeCode)
           return NextResponse.json({
             schemeCode: query.schemeCode,
             nav,
-            source: 'AMFI',
+            source: 'GOOGLE_SCRIPT',
             cached: false
           })
         } catch (error) {
@@ -187,12 +186,12 @@ export async function POST(request: NextRequest) {
 
     const { schemeCodes } = validation.data
     
-    // Fetch fresh NAV data
-    const results = await batchGetMutualFundNAVs(schemeCodes)
+    // Fetch fresh NAV data using unified API
+    const results = await batchGetPrices(schemeCodes)
     const formattedResults = results.map(result => ({
-      schemeCode: result.schemeCode,
-      nav: result.nav,
-      source: result.nav ? 'AMFI' : null,
+      schemeCode: result.symbol,
+      nav: result.price,
+      source: result.price ? 'GOOGLE_SCRIPT' : null,
       cached: false,
       error: result.error
     }))

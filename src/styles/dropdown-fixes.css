@@ -1,0 +1,57 @@
+/* Dropdown positioning fixes */
+
+/* Ensure dropdowns appear above all table elements */
+.dropdown-menu {
+  position: fixed !important;
+  z-index: 9999 !important;
+}
+
+/* Prevent table containers from clipping dropdowns */
+.table-container {
+  overflow: visible !important;
+}
+
+/* Ensure table rows don't create stacking contexts that interfere with dropdowns */
+.table-row {
+  position: relative;
+  z-index: auto;
+}
+
+/* When a dropdown is open, ensure the trigger has appropriate z-index */
+.dropdown-trigger-active {
+  position: relative;
+  z-index: 10000;
+}
+
+/* Smooth transitions for dropdown positioning */
+.dropdown-menu {
+  transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
+}
+
+/* Ensure dropdowns work well in scrollable containers */
+.scrollable-container .dropdown-menu {
+  position: fixed !important;
+}
+
+/* Mobile-specific dropdown adjustments */
+@media (max-width: 768px) {
+  .dropdown-menu {
+    min-width: 160px;
+    max-width: calc(100vw - 32px);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .dropdown-menu {
+    border-width: 2px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .dropdown-menu {
+    transition: none;
+  }
+}

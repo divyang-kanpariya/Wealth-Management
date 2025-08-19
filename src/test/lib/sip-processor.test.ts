@@ -30,7 +30,7 @@ const mockPrisma = {
 
 // Mock price fetcher
 vi.mock('@/lib/price-fetcher', () => ({
-  getMutualFundNAVWithFallback: vi.fn(),
+  getPriceWithFallback: vi.fn(),
 }))
 
 // Mock Prisma client
@@ -91,10 +91,10 @@ describe('SIP Transaction Processing', () => {
 
   describe('processSIPTransaction', () => {
     it('should successfully process a SIP transaction', async () => {
-      // Mock NAV fetching
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback).mockResolvedValue({
-        nav: 100,
-        source: 'AMFI',
+      // Mock price fetching
+      vi.mocked(priceFetcher.getPriceWithFallback).mockResolvedValue({
+        price: 100,
+        source: 'GOOGLE_SCRIPT',
         cached: false,
         fallbackUsed: false,
       })
@@ -111,7 +111,7 @@ describe('SIP Transaction Processing', () => {
       expect(result.units).toBe(50)
       expect(result.transactionId).toBe('txn-1')
 
-      expect(priceFetcher.getMutualFundNAVWithFallback).toHaveBeenCalledWith('120716', false)
+      expect(priceFetcher.getPriceWithFallback).toHaveBeenCalledWith('120716', false)
       expect(mockPrisma.sIPTransaction.create).toHaveBeenCalledWith({
         data: {
           sipId: 'sip-1',
@@ -158,9 +158,9 @@ describe('SIP Transaction Processing', () => {
       })
     })
 
-    it('should handle NAV fetching failure', async () => {
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback).mockRejectedValue(
-        new Error('NAV fetch failed')
+    it('should handle price fetching failure', async () => {
+      vi.mocked(priceFetcher.getPriceWithFallback).mockRejectedValue(
+        new Error('Price fetch failed')
       )
 
       const result = await processSIPTransaction(mockSIP)
@@ -180,10 +180,10 @@ describe('SIP Transaction Processing', () => {
       })
     })
 
-    it('should handle invalid NAV values', async () => {
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback).mockResolvedValue({
-        nav: 0,
-        source: 'AMFI',
+    it('should handle invalid price values', async () => {
+      vi.mocked(priceFetcher.getPriceWithFallback).mockResolvedValue({
+        price: 0,
+        source: 'GOOGLE_SCRIPT',
         cached: false,
         fallbackUsed: false,
       })
@@ -197,9 +197,9 @@ describe('SIP Transaction Processing', () => {
 
   describe('processSIPTransactionWithRetry', () => {
     it('should succeed on first attempt', async () => {
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback).mockResolvedValue({
-        nav: 100,
-        source: 'AMFI',
+      vi.mocked(priceFetcher.getPriceWithFallback).mockResolvedValue({
+        price: 100,
+        source: 'GOOGLE_SCRIPT',
         cached: false,
         fallbackUsed: false,
       })
@@ -212,12 +212,12 @@ describe('SIP Transaction Processing', () => {
     })
 
     it('should retry on failure and eventually succeed', async () => {
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback)
+      vi.mocked(priceFetcher.getPriceWithFallback)
         .mockRejectedValueOnce(new Error('Network error'))
         .mockRejectedValueOnce(new Error('Network error'))
         .mockResolvedValue({
-          nav: 100,
-          source: 'AMFI',
+          price: 100,
+          source: 'GOOGLE_SCRIPT',
           cached: false,
           fallbackUsed: false,
         })
@@ -234,7 +234,7 @@ describe('SIP Transaction Processing', () => {
     })
 
     it('should fail after maximum retries', async () => {
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback).mockRejectedValue(
+      vi.mocked(priceFetcher.getPriceWithFallback).mockRejectedValue(
         new Error('Persistent error')
       )
 
@@ -295,9 +295,9 @@ describe('SIP Transaction Processing', () => {
         }))
       )
 
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback).mockResolvedValue({
-        nav: 100,
-        source: 'AMFI',
+      vi.mocked(priceFetcher.getPriceWithFallback).mockResolvedValue({
+        price: 100,
+        source: 'GOOGLE_SCRIPT',
         cached: false,
         fallbackUsed: false,
       })
@@ -409,9 +409,9 @@ describe('SIP Transaction Processing', () => {
 
       mockPrisma.sIPTransaction.findMany.mockResolvedValue([failedTransaction])
       
-      vi.mocked(priceFetcher.getMutualFundNAVWithFallback).mockResolvedValue({
-        nav: 100,
-        source: 'AMFI',
+      vi.mocked(priceFetcher.getPriceWithFallback).mockResolvedValue({
+        price: 100,
+        source: 'GOOGLE_SCRIPT',
         cached: false,
         fallbackUsed: false,
       })

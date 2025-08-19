@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Goal, Investment } from '@/types';
 import { GoalDetailPageData } from '@/lib/server/data-preparators';
+import { calculateGoalProgressWithInflation } from '@/lib/calculations';
 import GoalProgress from './GoalProgress';
 import GoalForm from './GoalForm';
 import GoalAnalytics from './GoalAnalytics';
@@ -16,6 +17,7 @@ import Alert from '../ui/Alert';
 import CompactCard from '../ui/CompactCard';
 import DataGrid from '../ui/DataGrid';
 import TabPanel from '../ui/TabPanel';
+import { Toggle, Tooltip, InflationDisplay } from '../ui';
 
 interface GoalDetailsProps {
   data: GoalDetailPageData;
@@ -31,6 +33,8 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ data, onBack }) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics' | 'investments' | 'milestones'>('overview');
+  const [showInflationAdjusted, setShowInflationAdjusted] = useState(false);
+  const [inflationRate, setInflationRate] = useState(6);
 
   // Handle goal update
   const handleGoalUpdate = async (formData: any) => {
@@ -196,6 +200,11 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ data, onBack }) => {
   }
 
   const { currentAmount, percentage } = calculateProgress(goal);
+  const inflationAdjustedProgress = calculateGoalProgressWithInflation(
+    goal, 
+    data.investmentsWithValues || [], 
+    inflationRate
+  );
   const timeRemaining = calculateTimeRemaining(typeof goal.targetDate === 'string' ? goal.targetDate : goal.targetDate.toISOString());
   const priorityInfo = getPriorityLabel(goal.priority || 3);
 
@@ -240,13 +249,39 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ data, onBack }) => {
         }
       >
         <div className="space-y-4">
+          {/* Value Type Toggle */}
+          <div className="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <div className="flex items-center space-x-3">
+              <span className={`text-sm font-medium ${!showInflationAdjusted ? 'text-blue-600' : 'text-gray-500'}`}>
+                Nominal Values
+              </span>
+              <Toggle
+                checked={showInflationAdjusted}
+                onChange={setShowInflationAdjusted}
+                size="sm"
+              />
+              <span className={`text-sm font-medium ${showInflationAdjusted ? 'text-blue-600' : 'text-gray-500'}`}>
+                Inflation Adjusted
+              </span>
+            </div>
+            <div className="text-xs text-blue-600">
+              {showInflationAdjusted ? 'Real purchasing power' : 'Future value without inflation'}
+            </div>
+          </div>
+
           {/* Quick Stats */}
           <DataGrid
             items={[
               {
                 label: 'Progress',
-                value: `${percentage}%`,
-                color: percentage >= 75 ? 'success' : percentage >= 50 ? 'warning' : 'danger'
+                value: showInflationAdjusted 
+                  ? `${Math.round(inflationAdjustedProgress.realProgress)}%`
+                  : `${percentage}%`,
+                color: (showInflationAdjusted ? inflationAdjustedProgress.realProgress : percentage) >= 75 
+                  ? 'success' 
+                  : (showInflationAdjusted ? inflationAdjustedProgress.realProgress : percentage) >= 50 
+                    ? 'warning' 
+                    : 'danger'
               },
               {
                 label: 'Current Value',
@@ -254,8 +289,10 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ data, onBack }) => {
                 color: 'info'
               },
               {
-                label: 'Target Amount',
-                value: formatCurrency(goal.targetAmount),
+                label: showInflationAdjusted ? 'Inflation-Adjusted Target' : 'Target Amount',
+                value: showInflationAdjusted 
+                  ? formatCurrency(inflationAdjustedProgress.inflationAdjustedTarget)
+                  : formatCurrency(goal.targetAmount),
                 color: 'default'
               },
               {
@@ -315,8 +352,8 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ data, onBack }) => {
             <CompactCard title="Goal Progress">
               <GoalProgress
                 currentAmount={currentAmount}
-                targetAmount={goal.targetAmount}
-                percentage={percentage}
+                targetAmount={showInflationAdjusted ? inflationAdjustedProgress.inflationAdjustedTarget : goal.targetAmount}
+                percentage={showInflationAdjusted ? inflationAdjustedProgress.realProgress : percentage}
                 className="mb-4"
               />
               
@@ -328,13 +365,17 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ data, onBack }) => {
                     color: 'info'
                   },
                   {
-                    label: 'Target Amount',
-                    value: formatCurrency(goal.targetAmount),
+                    label: showInflationAdjusted ? 'Inflation-Adjusted Target' : 'Target Amount',
+                    value: showInflationAdjusted 
+                      ? formatCurrency(inflationAdjustedProgress.inflationAdjustedTarget)
+                      : formatCurrency(goal.targetAmount),
                     color: 'default'
                   },
                   {
                     label: 'Remaining',
-                    value: formatCurrency(Math.max(0, goal.targetAmount - currentAmount)),
+                    value: showInflationAdjusted
+                      ? formatCurrency(Math.max(0, inflationAdjustedProgress.inflationAdjustedTarget - currentAmount))
+                      : formatCurrency(Math.max(0, goal.targetAmount - currentAmount)),
                     color: 'warning'
                   }
                 ]}
@@ -342,6 +383,25 @@ const GoalDetails: React.FC<GoalDetailsProps> = ({ data, onBack }) => {
                 variant="default"
                 className="mt-6"
               />
+
+              {/* Inflation Impact Summary */}
+              {showInflationAdjusted && (
+                <div className="mt-6">
+                  <InflationDisplay
+                    nominalValue={inflationAdjustedProgress.inflationAdjustedTarget}
+                    realValue={goal.targetAmount}
+                    inflationRate={inflationRate}
+                    years={inflationAdjustedProgress.yearsToTarget}
+                    onInflationRateChange={setInflationRate}
+                    title="Inflation Impact Summary"
+                    nominalLabel="Inflation-Adjusted Target"
+                    realLabel="Original Goal"
+                    variant="default"
+                    showToggle={false}
+                    description="How inflation affects your goal over time"
+                  />
+                </div>
+              )}
             </CompactCard>
 
             {/* Goal Details */}

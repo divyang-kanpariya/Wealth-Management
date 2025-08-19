@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Goal, Investment, InvestmentType, Account, InvestmentWithCurrentValue } from '@/types';
 import CompactCard from '../ui/CompactCard';
 import Button from '../ui/Button';
@@ -48,13 +48,7 @@ const GoalInvestmentList: React.FC<GoalInvestmentListProps> = ({
     sortOrder: 'asc'
   });
 
-  useEffect(() => {
-    applyFilters();
-  }, [investments, filters]);
-
-
-
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...investments];
 
     // Search filter
@@ -109,7 +103,11 @@ const GoalInvestmentList: React.FC<GoalInvestmentListProps> = ({
     });
 
     setFilteredInvestments(filtered);
-  };
+  }, [investments, filters]);
+
+  useEffect(() => {
+    applyFilters();
+  }, [applyFilters]);
 
   const handleSelectionChange = (investmentId: string, selected: boolean) => {
     const newSelection = new Set(selectedInvestments);

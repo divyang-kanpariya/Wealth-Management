@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import { Goal } from '@/types';
+import { calculateInflationAdjustedValue } from '@/lib/calculations';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
 import LoadingSpinner from '../ui/LoadingSpinner';
 import QuickActions from '../ui/QuickActions';
+import { Toggle, Tooltip, InflationDisplay } from '../ui';
 
 interface GoalFormProps {
   goal?: Goal;
@@ -31,6 +33,9 @@ const GoalForm: React.FC<GoalFormProps> = ({
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [enableInflationAdjustment, setEnableInflationAdjustment] = useState(false);
+  const [inflationRate, setInflationRate] = useState(6);
+
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
@@ -142,6 +147,75 @@ const GoalForm: React.FC<GoalFormProps> = ({
             rows={3}
             className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
           />
+        </div>
+
+        {/* Inflation Adjustment Section */}
+        <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <div>
+                <h3 className="text-sm font-medium text-gray-900">Inflation Adjustment</h3>
+                <p className="text-xs text-gray-600">Account for inflation to see real purchasing power</p>
+              </div>
+              <Tooltip content="Inflation erodes the value of money over time. A goal of ₹10 lakhs today will need to be much higher in 10 years to have the same purchasing power. Enable this to see the real impact.">
+                <svg className="w-4 h-4 text-gray-400 hover:text-gray-600 cursor-help" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </Tooltip>
+            </div>
+            <Toggle
+              checked={enableInflationAdjustment}
+              onChange={setEnableInflationAdjustment}
+              label=""
+            />
+          </div>
+
+          {enableInflationAdjustment && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Expected Inflation Rate (%)"
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="15"
+                  value={inflationRate}
+                  onChange={(e) => setInflationRate(Number(e.target.value))}
+                />
+                
+
+              </div>
+
+              {/* Inflation Impact Display */}
+              {formData.targetAmount && formData.targetDate && (() => {
+                const targetAmount = parseFloat(formData.targetAmount);
+                const targetDate = new Date(formData.targetDate);
+                const currentDate = new Date();
+                const yearsToTarget = Math.max(0, (targetDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24 * 365.25));
+                
+                if (targetAmount > 0 && yearsToTarget > 0) {
+                  const futureValue = calculateInflationAdjustedValue(targetAmount, inflationRate, yearsToTarget);
+                  
+                  return (
+                    <InflationDisplay
+                      nominalValue={futureValue}
+                      realValue={targetAmount}
+                      inflationRate={inflationRate}
+                      years={yearsToTarget}
+                      onInflationRateChange={setInflationRate}
+                      title="Inflation Impact"
+                      nominalLabel="Required Future Value"
+                      realLabel="Your Goal (Today's Value)"
+                      variant="compact"
+                      showToggle={false}
+                      description="How inflation affects your goal over time"
+                    />
+                  );
+                }
+                return null;
+              })()}
+            </div>
+          )}
         </div>
       </div>
       

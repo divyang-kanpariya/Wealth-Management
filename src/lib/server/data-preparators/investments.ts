@@ -3,7 +3,7 @@ import {
   calculateInvestmentsWithPrices,
   calculateInvestmentValue
 } from '@/lib/calculations'
-import { PageDataBase } from './base'
+import { BaseDataPreparator, PageDataBase } from './base'
 import { 
   InvestmentWithCurrentValue, 
   Investment, 
@@ -24,43 +24,81 @@ export interface InvestmentsPageData extends PageDataBase {
   lastPriceUpdate: Date
 }
 
-export class InvestmentsDataPreparator extends OptimizedDataPreparator<InvestmentsPageData> {
-  constructor() {
-    super({
-      cacheKey: 'investments-list',
-      pageName: 'investments',
-      cacheType: 'list',
-      enableStaleWhileRevalidate: true
-    })
+export class InvestmentsDataPreparator extends BaseDataPreparator {
+  private readonly CACHE_KEY = 'investments-list'
+
+  async prepare(): Promise<InvestmentsPageData> {
+    return withPerformanceTracking('InvestmentsDataPreparator.prepare', async () => {
+      return this.prepareInternal()
+    }, {}, ['investments', 'data-preparation'])
   }
 
-  protected async fetchFreshData(): Promise<InvestmentsPageData> {
-    // Use optimized database queries
+  private async prepareInternal(): Promise<InvestmentsPageData> {
+    const pageStartTime = performance.now()
+    
+    try {
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[InvestmentsDataPreparator] Fetching fresh user data (no cache)`)
+      const dataStartTime = performance.now()
+      const freshData = await this.fetchFreshData()
+      const dataPreparationTime = performance.now() - dataStartTime
+      
+      const totalTime = performance.now() - pageStartTime
+      const renderTime = totalTime - dataPreparationTime
+      
+      console.log(`[InvestmentsDataPreparator] Fresh data fetched in ${totalTime.toFixed(2)}ms (data: ${dataPreparationTime.toFixed(2)}ms, render: ${renderTime.toFixed(2)}ms)`)
+      return freshData
+
+    } catch (error) {
+      console.error('Investments data preparation failed:', error)
+      
+      // Return minimal fallback data
+      const fallbackData = await this.getFallbackData()
+      const totalTime = performance.now() - pageStartTime
+      return fallbackData
+    }
+  }
+
+  private async fetchFreshData(): Promise<InvestmentsPageData> {
+    // Always fetch fresh user data from database - no caching for user CRUD operations
     const [investments, goals, accounts] = await Promise.all([
-      this.executeOptimizedQuery('fetchInvestments', () => 
-        queryOptimizer.getOptimizedInvestments({
-          includeGoal: true,
-          includeAccount: true
-        })
-      ),
-      this.executeOptimizedQuery('fetchGoals', () => 
-        queryOptimizer.getOptimizedGoals({
-          includeInvestments: true
-        })
-      ),
-      this.executeOptimizedQuery('fetchAccounts', () => 
-        queryOptimizer.getOptimizedAccounts({
-          includeInvestments: true
-        })
-      )
+      // Direct database queries without caching for user data
+      prisma.investment.findMany({
+        include: {
+          goal: true,
+          account: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      }),
+      prisma.goal.findMany({
+        include: {
+          investments: true
+        },
+        orderBy: {
+          targetDate: 'asc'
+        }
+      }),
+      prisma.account.findMany({
+        include: {
+          investments: true
+        },
+        orderBy: {
+          name: 'asc'
+        }
+      })
     ])
+
+    // Check if force refresh is requested
+    const forceRefresh = (global as any).forceRefreshPrices || false
 
     // Get price data for all investments
     let priceData: Map<string, number>
     try {
       priceData = await withPerformanceTracking('InvestmentsDataPreparator.fetchPriceData',
-        () => this.fetchPriceData(investments),
-        { investmentCount: investments.length },
+        () => this.fetchPriceData(investments, [], forceRefresh),
+        { investmentCount: investments.length, forceRefresh },
         ['investments', 'price-fetch']
       )
     } catch (priceError) {
@@ -109,7 +147,7 @@ export class InvestmentsDataPreparator extends OptimizedDataPreparator<Investmen
     }))
   }
 
-  protected async getFallbackData(): Promise<InvestmentsPageData> {
+  private async getFallbackData(): Promise<InvestmentsPageData> {
     return {
       timestamp: new Date(),
       investments: [],
@@ -122,10 +160,8 @@ export class InvestmentsDataPreparator extends OptimizedDataPreparator<Investmen
     }
   }
 
-  // Method to invalidate cache when data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(): void {
-    const preparator = new InvestmentsDataPreparator()
-    preparator.invalidateCache()
-    console.log('[InvestmentsDataPreparator] Cache invalidated')
+    console.log('[InvestmentsDataPreparator] No cache invalidation needed - user data always fresh')
   }
 }

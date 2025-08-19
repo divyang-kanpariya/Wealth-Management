@@ -23,7 +23,6 @@ vi.mock('@/lib/calculations', () => ({
 // Mock price fetcher
 vi.mock('@/lib/price-fetcher', () => ({
   batchGetPrices: vi.fn(),
-  batchGetMutualFundNAVs: vi.fn(),
 }))
 
 // Mock Next.js cache

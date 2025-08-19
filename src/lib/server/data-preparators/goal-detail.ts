@@ -10,7 +10,7 @@ import {
   InvestmentWithCurrentValue,
   GoalProgress
 } from '@/types'
-import { unstable_cache } from 'next/cache'
+
 import { notFound } from 'next/navigation'
 
 export interface GoalDetailPageData extends PageDataBase {
@@ -31,18 +31,9 @@ export class GoalDetailDataPreparator extends BaseDataPreparator {
     const startTime = Date.now()
     
     try {
-      // Use Next.js unstable_cache for database queries
-      const getCachedGoal = unstable_cache(
-        async () => this.fetchGoal(goalId),
-        [`goal-detail-${goalId}`],
-        { 
-          revalidate: 300, // 5 minutes
-          tags: ['goals', `goal-${goalId}`, 'investments']
-        }
-      )
-
-      // Fetch goal data with investments
-      const goal = await getCachedGoal()
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[GoalDetailDataPreparator] Fetching fresh user data (no cache)`)
+      const goal = await this.fetchGoal(goalId)
       
       if (!goal) {
         notFound()
@@ -52,10 +43,13 @@ export class GoalDetailDataPreparator extends BaseDataPreparator {
       const transformedGoal = this.transformGoal(goal)
       const transformedInvestments = this.transformInvestments(goal.investments || [])
 
+      // Check if force refresh is requested
+      const forceRefresh = (global as any).forceRefreshPrices || false
+
       // Get price data for all investments in this goal
       let priceData: Map<string, number>
       try {
-        priceData = await this.fetchPriceData(transformedInvestments)
+        priceData = await this.fetchPriceData(transformedInvestments, [], forceRefresh)
       } catch (priceError) {
         console.error('Price data fetch failed, using empty price data:', priceError)
         priceData = new Map()
@@ -70,7 +64,7 @@ export class GoalDetailDataPreparator extends BaseDataPreparator {
       // Calculate projections
       const projections = this.calculateProjections(transformedGoal, goalProgress)
 
-      console.log(`[GoalDetailDataPreparator] Data prepared in ${Date.now() - startTime}ms`)
+      console.log(`[GoalDetailDataPreparator] Fresh data prepared in ${Date.now() - startTime}ms`)
 
       return {
         timestamp: new Date(),
@@ -173,8 +167,8 @@ export class GoalDetailDataPreparator extends BaseDataPreparator {
     }
   }
 
-  // Method to invalidate cache when goal data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(goalId: string): void {
-    console.log(`[GoalDetailDataPreparator] Cache invalidated for goal ${goalId}`)
+    console.log(`[GoalDetailDataPreparator] No cache invalidation needed - user data always fresh`)
   }
 }

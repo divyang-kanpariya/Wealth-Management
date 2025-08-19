@@ -46,8 +46,7 @@ vi.mock('@/lib/prisma', () => ({
 
 // Mock price fetcher
 vi.mock('@/lib/price-fetcher', () => ({
-  batchGetPrices: vi.fn(),
-  batchGetMutualFundNAVs: vi.fn()
+  batchGetPrices: vi.fn()
 }))
 
 // Test implementation of BaseDataPreparator

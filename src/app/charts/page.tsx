@@ -13,6 +13,9 @@ import {
 import { Layout } from '@/components/layout'
 import { ChartsDataPreparator } from '@/lib/server/data-preparators/charts'
 
+// Enable dynamic rendering to ensure fresh data after updates
+export const dynamic = 'force-dynamic'
+
 export default async function ChartsPage() {
   const preparator = new ChartsDataPreparator()
   const pageData = await preparator.prepare()

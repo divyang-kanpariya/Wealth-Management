@@ -1,7 +1,6 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { CacheInvalidation } from '../cache-invalidation'
 
 export type BulkOperationResult = {
   success: boolean
@@ -26,8 +25,7 @@ export async function bulkDeleteInvestmentsBatch(investmentIds: string[]): Promi
       }
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateInvestments()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -68,9 +66,7 @@ export async function bulkUpdateInvestmentGoals(
       }
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateInvestments()
-    CacheInvalidation.invalidateGoals()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -101,9 +97,7 @@ export async function processSipTransactions(): Promise<BulkOperationResult> {
     // For now, we'll just return a placeholder
     console.log('Processing SIP transactions...')
     
-    // Invalidate caches after processing
-    CacheInvalidation.invalidateSIPs()
-    CacheInvalidation.invalidateDashboard()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,

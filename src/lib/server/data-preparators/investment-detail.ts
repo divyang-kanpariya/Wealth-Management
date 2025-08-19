@@ -7,7 +7,7 @@ import {
   Goal, 
   Account
 } from '@/types'
-import { unstable_cache } from 'next/cache'
+
 import { notFound } from 'next/navigation'
 
 export interface InvestmentDetailPageData extends PageDataBase {
@@ -23,18 +23,9 @@ export class InvestmentDetailDataPreparator extends BaseDataPreparator {
     const startTime = Date.now()
     
     try {
-      // Use Next.js unstable_cache for database queries
-      const getCachedInvestment = unstable_cache(
-        async () => this.fetchInvestment(investmentId),
-        [`investment-detail-${investmentId}`],
-        { 
-          revalidate: 300, // 5 minutes
-          tags: ['investments', `investment-${investmentId}`]
-        }
-      )
-
-      // Fetch investment data
-      const investment = await getCachedInvestment()
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[InvestmentDetailDataPreparator] Fetching fresh user data (no cache)`)
+      const investment = await this.fetchInvestment(investmentId)
       
       if (!investment) {
         notFound()
@@ -43,13 +34,16 @@ export class InvestmentDetailDataPreparator extends BaseDataPreparator {
       // Transform data to match TypeScript types
       const transformedInvestment = this.transformInvestment(investment)
 
+      // Check if force refresh is requested
+      const forceRefresh = (global as any).forceRefreshPrices || false
+
       // Get price data for this investment if it has a symbol
       let priceData: Map<string, number>
       let currentPrice: number | undefined
       
       try {
         if (investment.symbol && ['STOCK', 'MUTUAL_FUND', 'CRYPTO'].includes(investment.type)) {
-          priceData = await this.fetchPriceData([investment])
+          priceData = await this.fetchPriceData([investment], [], forceRefresh)
           currentPrice = priceData.get(investment.symbol)
         } else {
           priceData = new Map()
@@ -62,7 +56,7 @@ export class InvestmentDetailDataPreparator extends BaseDataPreparator {
       // Calculate investment value with current price
       const investmentWithValue = calculateInvestmentValue(transformedInvestment, currentPrice)
 
-      console.log(`[InvestmentDetailDataPreparator] Data prepared in ${Date.now() - startTime}ms`)
+      console.log(`[InvestmentDetailDataPreparator] Fresh data prepared in ${Date.now() - startTime}ms`)
 
       return {
         timestamp: new Date(),
@@ -123,8 +117,8 @@ export class InvestmentDetailDataPreparator extends BaseDataPreparator {
     }
   }
 
-  // Method to invalidate cache when investment data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(investmentId: string): void {
-    console.log(`[InvestmentDetailDataPreparator] Cache invalidated for investment ${investmentId}`)
+    console.log(`[InvestmentDetailDataPreparator] No cache invalidation needed - user data always fresh`)
   }
 }

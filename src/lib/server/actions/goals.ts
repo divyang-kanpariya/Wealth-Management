@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { 
@@ -9,7 +8,7 @@ import {
   goalSchema,
   updateGoalSchema 
 } from '@/lib/validations'
-import { CacheInvalidation } from '../cache-invalidation'
+
 
 export type GoalActionResult = {
   success: boolean
@@ -42,8 +41,7 @@ export async function createGoal(formData: FormData): Promise<GoalActionResult> 
       },
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateGoals()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -72,7 +70,7 @@ export async function createGoalFromData(data: any): Promise<GoalActionResult> {
       },
     })
     
-    CacheInvalidation.invalidateGoals()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -130,8 +128,7 @@ export async function updateGoal(id: string, formData: FormData): Promise<GoalAc
       },
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateGoals()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -173,7 +170,7 @@ export async function updateGoalFromData(id: string, data: any): Promise<GoalAct
       },
     })
     
-    CacheInvalidation.invalidateGoals()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -221,9 +218,7 @@ export async function deleteGoal(id: string): Promise<GoalActionResult> {
       where: { id },
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateGoals()
-    CacheInvalidation.invalidateInvestments() // Since investments were updated
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true
@@ -266,9 +261,7 @@ export async function assignInvestmentsToGoal(goalId: string, investmentIds: str
       }
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateGoals()
-    CacheInvalidation.invalidateInvestments()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -300,9 +293,7 @@ export async function removeInvestmentsFromGoal(investmentIds: string[]): Promis
       }
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateGoals()
-    CacheInvalidation.invalidateInvestments()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,

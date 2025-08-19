@@ -55,15 +55,8 @@ export class ChartsDataPreparator extends BaseDataPreparator {
     const pageStartTime = performance.now()
     
     try {
-      // Try to get cached data first
-      const cachedData = chartsCache.get(this.CACHE_KEY)
-      if (cachedData && typeof cachedData === 'object' && 'dashboardData' in cachedData) {
-        const renderTime = performance.now() - pageStartTime
-        performanceMonitor.trackPageGeneration('charts', 0, renderTime, true)
-        console.log(`[ChartsDataPreparator] Cache HIT - served in ${renderTime.toFixed(2)}ms`)
-        return cachedData as ChartsPageData
-      }
-
+      // Always fetch fresh user data from database - no caching for user CRUD operations
+      console.log(`[ChartsDataPreparator] Fetching fresh user data (no cache)`)
       const dataStartTime = performance.now()
 
       // Use optimized parallel fetching for dashboard data
@@ -143,8 +136,7 @@ export class ChartsDataPreparator extends BaseDataPreparator {
         portfolioPerformanceData,
       }
 
-      // Cache the result
-      chartsCache.set(this.CACHE_KEY, result)
+      // No caching for user data - always serve fresh data
 
       const dataPreparationTime = performance.now() - dataStartTime
       const totalTime = performance.now() - pageStartTime
@@ -157,15 +149,7 @@ export class ChartsDataPreparator extends BaseDataPreparator {
     } catch (error) {
       console.error('Charts data preparation failed:', error)
       
-      // Try to return stale data as fallback
-      const staleData = chartsCache.getStale(this.CACHE_KEY)
-      if (staleData && typeof staleData === 'object' && 'dashboardData' in staleData) {
-        const renderTime = performance.now() - pageStartTime
-        performanceMonitor.trackPageGeneration('charts', 0, renderTime, true)
-        console.log(`[ChartsDataPreparator] Error occurred, serving stale data as fallback`)
-        return staleData as ChartsPageData
-      }
-      
+      // Return fallback data - no stale cache fallback for user data
       const fallbackData = await this.getFallbackData()
       const totalTime = performance.now() - pageStartTime
       performanceMonitor.trackPageGeneration('charts', totalTime, 0, false)
@@ -173,11 +157,9 @@ export class ChartsDataPreparator extends BaseDataPreparator {
     }
   }
 
-  // Method to invalidate cache when data changes
+  // No cache invalidation needed - user data is always fetched fresh
   static invalidateCache(): void {
-    const stats = chartsCache.getStats()
-    chartsCache.invalidate()
-    console.log(`[ChartsDataPreparator] Cache invalidated (${stats.totalEntries} entries removed, hit rate: ${stats.hitRate.toFixed(2)}%)`)
+    console.log(`[ChartsDataPreparator] No cache invalidation needed - user data always fresh`)
   }
 
   // Get performance statistics

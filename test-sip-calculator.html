@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIP Calculator Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
+        .toggle { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+        .toggle input[type="checkbox"] { transform: scale(1.5); }
+        .results { background: #f0f8ff; padding: 15px; border-radius: 8px; }
+        .breakdown { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .inflation-info { background: #fff3cd; padding: 10px; border-radius: 8px; margin: 10px 0; }
+        .step-up-info { background: #d1ecf1; padding: 10px; border-radius: 8px; margin: 10px 0; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        .metric { text-align: center; padding: 10px; background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .metric-label { font-size: 12px; color: #666; text-transform: uppercase; }
+        .metric-value { font-size: 18px; font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Enhanced SIP Calculator Test</h1>
+        
+        <div class="section">
+            <h2>Calculator Inputs</h2>
+            
+            <div>
+                <label>
+                    <input type="radio" name="calcType" value="target" checked> 
+                    Calculate monthly amount for target
+                </label>
+                <label>
+                    <input type="radio" name="calcType" value="amount"> 
+                    Calculate target from monthly amount
+                </label>
+            </div>
+            
+            <div id="targetInput">
+                <label>Target Amount (₹): <input type="number" id="targetAmount" value="1000000" step="10000"></label>
+            </div>
+            
+            <div id="amountInput" style="display: none;">
+                <label>Monthly Amount (₹): <input type="number" id="monthlyAmount" value="5000" step="500"></label>
+            </div>
+            
+            <label>Investment Period (Years): <input type="number" id="years" value="10" min="1" max="50"></label>
+            <label>Expected Annual Return (%): <input type="number" id="expectedReturn" value="12" step="0.5" min="1" max="30"></label>
+            
+            <h3>Advanced Options</h3>
+            
+            <div class="toggle">
+                <input type="checkbox" id="enableInflation">
+                <label for="enableInflation">Adjust for inflation</label>
+            </div>
+            
+            <div id="inflationOptions" style="display: none;">
+                <label>Inflation Rate (%): <input type="number" id="inflationRate" value="6" step="0.5" min="0" max="15"></label>
+                <div class="inflation-info" id="inflationInfo"></div>
+            </div>
+            
+            <div class="toggle">
+                <input type="checkbox" id="enableStepUp">
+                <label for="enableStepUp">Enable step-up SIP</label>
+            </div>
+            
+            <div id="stepUpOptions" style="display: none;">
+                <label>Annual Step-up Rate (%): <input type="number" id="stepUpRate" value="10" step="1" min="5" max="25"></label>
+                <div class="step-up-info">Your investment will increase by <span id="stepUpDisplay">10</span>% every year</div>
+            </div>
+            
+            <button onclick="calculateSIP()">Calculate</button>
+        </div>
+        
+        <div class="section" id="resultsSection" style="display: none;">
+            <h2>Calculation Results</h2>
+            <div class="results">
+                <div class="grid" id="resultsGrid"></div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <label>
+                    <input type="checkbox" id="showBreakdown"> Show Investment Breakdown
+                </label>
+                <label style="margin-left: 20px;">
+                    <input type="radio" name="breakdownView" value="yearly" checked> Yearly
+                    <input type="radio" name="breakdownView" value="monthly"> Monthly
+                </label>
+            </div>
+            
+            <div class="breakdown" id="breakdownSection" style="display: none;">
+                <h3>Investment Breakdown</h3>
+                <div id="breakdownTable"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle handlers
+        document.querySelectorAll('input[name="calcType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                document.getElementById('targetInput').style.display = this.value === 'target' ? 'block' : 'none';
+                document.getElementById('amountInput').style.display = this.value === 'amount' ? 'block' : 'none';
+            });
+        });
+
+        document.getElementById('enableInflation').addEventListener('change', function() {
+            document.getElementById('inflationOptions').style.display = this.checked ? 'block' : 'none';
+            updateInflationInfo();
+        });
+
+        document.getElementById('enableStepUp').addEventListener('change', function() {
+            document.getElementById('stepUpOptions').style.display = this.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('stepUpRate').addEventListener('input', function() {
+            document.getElementById('stepUpDisplay').textContent = this.value;
+        });
+
+        document.getElementById('showBreakdown').addEventListener('change', function() {
+            document.getElementById('breakdownSection').style.display = this.checked ? 'block' : 'none';
+        });
+
+        // Auto-calculate on input changes
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', debounce(calculateSIP, 800));
+        });
+
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function updateInflationInfo() {
+            if (!document.getElementById('enableInflation').checked) return;
+            
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value) || 1000000;
+            const years = parseFloat(document.getElementById('years').value) || 10;
+            const inflationRate = parseFloat(document.getElementById('inflationRate').value) || 6;
+            
+            const futureValue = targetAmount * Math.pow(1 + inflationRate / 100, years);
+            
+            document.getElementById('inflationInfo').innerHTML = `
+                <strong>Inflation Impact:</strong><br>
+                Present Value: ₹${targetAmount.toLocaleString('en-IN')}<br>
+                Future Value (after ${years} years): ₹${Math.round(futureValue).toLocaleString('en-IN')}<br>
+                <small>You need ₹${Math.round(futureValue).toLocaleString('en-IN')} to have the same purchasing power as ₹${targetAmount.toLocaleString('en-IN')} today.</small>
+            `;
+        }
+
+        function calculateSIP() {
+            const calcType = document.querySelector('input[name="calcType"]:checked').value;
+            const targetAmount = parseFloat(document.getElementById('targetAmount').value) || 1000000;
+            const monthlyAmount = parseFloat(document.getElementById('monthlyAmount').value) || 5000;
+            const years = parseFloat(document.getElementById('years').value) || 10;
+            const expectedReturn = parseFloat(document.getElementById('expectedReturn').value) || 12;
+            const enableInflation = document.getElementById('enableInflation').checked;
+            const inflationRate = parseFloat(document.getElementById('inflationRate').value) || 6;
+            const enableStepUp = document.getElementById('enableStepUp').checked;
+            const stepUpRate = parseFloat(document.getElementById('stepUpRate').value) || 10;
+
+            const monthlyRate = expectedReturn / 100 / 12;
+            const totalMonths = years * 12;
+
+            let calculatedMonthlyAmount, calculatedTargetAmount;
+
+            if (calcType === 'target') {
+                const adjustedTarget = enableInflation 
+                    ? targetAmount * Math.pow(1 + inflationRate / 100, years)
+                    : targetAmount;
+                
+                if (enableStepUp) {
+                    calculatedMonthlyAmount = calculateStepUpSipAmount(adjustedTarget, monthlyRate, totalMonths, stepUpRate / 100 / 12);
+                } else {
+                    calculatedMonthlyAmount = adjustedTarget / (((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate) * (1 + monthlyRate));
+                }
+                calculatedTargetAmount = adjustedTarget;
+            } else {
+                calculatedMonthlyAmount = monthlyAmount;
+                if (enableStepUp) {
+                    calculatedTargetAmount = calculateStepUpSipValue(monthlyAmount, monthlyRate, totalMonths, stepUpRate / 100 / 12);
+                } else {
+                    calculatedTargetAmount = monthlyAmount * (((Math.pow(1 + monthlyRate, totalMonths) - 1) / monthlyRate) * (1 + monthlyRate));
+                }
+            }
+
+            const breakdown = calculateMonthlyBreakdown(calculatedMonthlyAmount, monthlyRate, totalMonths, enableStepUp ? stepUpRate / 100 / 12 : 0);
+            const totalInvestment = breakdown.reduce((sum, month) => sum + month.monthlyInvestment, 0);
+            const maturityAmount = breakdown[breakdown.length - 1]?.cumulativeValue || 0;
+            const totalGains = maturityAmount - totalInvestment;
+
+            displayResults({
+                monthlyAmount: Math.round(calculatedMonthlyAmount),
+                targetAmount: Math.round(calculatedTargetAmount),
+                totalInvestment: Math.round(totalInvestment),
+                maturityAmount: Math.round(maturityAmount),
+                totalGains: Math.round(totalGains),
+                breakdown,
+                inflationAdjusted: enableInflation ? targetAmount : null,
+                stepUpEnabled: enableStepUp
+            });
+
+            updateInflationInfo();
+        }
+
+        function calculateStepUpSipAmount(targetAmount, monthlyRate, totalMonths, stepUpRate) {
+            let low = 100, high = targetAmount / 12, result = 0;
+            
+            for (let i = 0; i < 100; i++) {
+                const mid = (low + high) / 2;
+                const calculatedValue = calculateStepUpSipValue(mid, monthlyRate, totalMonths, stepUpRate);
+                
+                if (Math.abs(calculatedValue - targetAmount) < 1000) {
+                    result = mid;
+                    break;
+                }
+                
+                if (calculatedValue < targetAmount) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+            }
+            
+            return result;
+        }
+
+        function calculateStepUpSipValue(initialAmount, monthlyRate, totalMonths, stepUpRate) {
+            let totalValue = 0;
+            let currentAmount = initialAmount;
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                if (month > 1 && (month - 1) % 12 === 0) {
+                    currentAmount = currentAmount * (1 + stepUpRate * 12);
+                }
+                
+                const remainingMonths = totalMonths - month + 1;
+                const futureValue = currentAmount * Math.pow(1 + monthlyRate, remainingMonths - 1);
+                totalValue += futureValue;
+            }
+            
+            return totalValue;
+        }
+
+        function calculateMonthlyBreakdown(monthlyAmount, monthlyRate, totalMonths, stepUpRate) {
+            const breakdown = [];
+            let cumulativeInvestment = 0;
+            let cumulativeValue = 0;
+            let currentAmount = monthlyAmount;
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                if (stepUpRate > 0 && month > 1 && (month - 1) % 12 === 0) {
+                    currentAmount = currentAmount * (1 + stepUpRate * 12);
+                }
+                
+                cumulativeInvestment += currentAmount;
+                cumulativeValue = (cumulativeValue * (1 + monthlyRate)) + currentAmount;
+                
+                breakdown.push({
+                    month,
+                    year: Math.ceil(month / 12),
+                    monthlyInvestment: Math.round(currentAmount),
+                    cumulativeInvestment: Math.round(cumulativeInvestment),
+                    cumulativeValue: Math.round(cumulativeValue),
+                    monthlyGain: Math.round(cumulativeValue - cumulativeInvestment)
+                });
+            }
+            
+            return breakdown;
+        }
+
+        function displayResults(results) {
+            document.getElementById('resultsSection').style.display = 'block';
+            
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = `
+                <div class="metric">
+                    <div class="metric-label">Monthly Investment</div>
+                    <div class="metric-value">₹${results.monthlyAmount.toLocaleString('en-IN')}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Total Investment</div>
+                    <div class="metric-value">₹${results.totalInvestment.toLocaleString('en-IN')}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Maturity Amount</div>
+                    <div class="metric-value">₹${results.maturityAmount.toLocaleString('en-IN')}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Total Gains</div>
+                    <div class="metric-value">₹${results.totalGains.toLocaleString('en-IN')}</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Return Rate</div>
+                    <div class="metric-value">${((results.totalGains / results.totalInvestment) * 100).toFixed(1)}%</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-label">Wealth Multiplier</div>
+                    <div class="metric-value">${(results.maturityAmount / results.totalInvestment).toFixed(1)}x</div>
+                </div>
+            `;
+
+            if (document.getElementById('showBreakdown').checked) {
+                displayBreakdown(results.breakdown);
+            }
+        }
+
+        function displayBreakdown(breakdown) {
+            const breakdownView = document.querySelector('input[name="breakdownView"]:checked').value;
+            const filteredBreakdown = breakdownView === 'yearly' 
+                ? breakdown.filter((_, index) => index % 12 === 11 || index === breakdown.length - 1)
+                : breakdown;
+
+            const table = document.getElementById('breakdownTable');
+            table.innerHTML = `
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f8f9fa;">
+                            <th style="padding: 10px; border: 1px solid #ddd;">${breakdownView === 'monthly' ? 'Month' : 'Year'}</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Investment</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Cumulative Investment</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Portfolio Value</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Total Gains</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${filteredBreakdown.map((row, index) => `
+                            <tr style="background: ${index % 2 === 0 ? 'white' : '#f8f9fa'};">
+                                <td style="padding: 10px; border: 1px solid #ddd;">
+                                    ${breakdownView === 'monthly' 
+                                        ? `Year ${row.year}, Month ${((row.month - 1) % 12) + 1}`
+                                        : `Year ${row.year}`
+                                    }
+                                </td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">₹${row.monthlyInvestment.toLocaleString('en-IN')}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">₹${row.cumulativeInvestment.toLocaleString('en-IN')}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">₹${row.cumulativeValue.toLocaleString('en-IN')}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd; color: green;">₹${row.monthlyGain.toLocaleString('en-IN')}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        // Initialize
+        calculateSIP();
+    </script>
+</body>
+</html>

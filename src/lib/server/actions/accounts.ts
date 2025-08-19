@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { 
@@ -9,7 +8,7 @@ import {
   accountSchema,
   updateAccountSchema 
 } from '@/lib/validations'
-import { CacheInvalidation } from '../cache-invalidation'
+
 
 export type AccountActionResult = {
   success: boolean
@@ -40,8 +39,7 @@ export async function createAccount(formData: FormData): Promise<AccountActionRe
       },
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateAll() // Accounts affect multiple areas
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -70,7 +68,7 @@ export async function createAccountFromData(data: any): Promise<AccountActionRes
       },
     })
     
-    CacheInvalidation.invalidateAll()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -114,8 +112,7 @@ export async function updateAccount(id: string, formData: FormData): Promise<Acc
       },
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateAll()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -145,7 +142,7 @@ export async function updateAccountFromData(id: string, data: any): Promise<Acco
       },
     })
     
-    CacheInvalidation.invalidateAll()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -193,8 +190,7 @@ export async function deleteAccount(id: string): Promise<AccountActionResult> {
       where: { id },
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateAll()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true

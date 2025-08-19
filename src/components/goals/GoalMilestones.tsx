@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Goal } from '@/types';
 import CompactCard from '../ui/CompactCard';
 import Button from '../ui/Button';
@@ -36,11 +36,7 @@ const GoalMilestones: React.FC<GoalMilestonesProps> = ({
   });
   const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
 
-  useEffect(() => {
-    initializeMilestones();
-  }, [goal, currentAmount]);
-
-  const initializeMilestones = () => {
+  const initializeMilestones = useCallback(() => {
     // Create default milestones if none exist
     const defaultMilestones: Milestone[] = [
       { id: '1', percentage: 25, amount: goal.targetAmount * 0.25, description: '25% Complete', achieved: false },
@@ -57,7 +53,11 @@ const GoalMilestones: React.FC<GoalMilestonesProps> = ({
     }));
 
     setMilestones(updatedMilestones);
-  };
+  }, [goal, currentAmount]);
+
+  useEffect(() => {
+    initializeMilestones();
+  }, [initializeMilestones]);
 
   const addCustomMilestone = () => {
     if (!newMilestone.percentage || !newMilestone.description) return;

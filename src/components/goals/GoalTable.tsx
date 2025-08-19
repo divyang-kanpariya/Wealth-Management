@@ -252,7 +252,7 @@ const GoalTable: React.FC<GoalTableProps> = ({
     <DropdownMenu
       items={getActionItems(goal)}
       size="sm"
-      placement="bottom-right"
+      placement="auto"
     />
   );
 

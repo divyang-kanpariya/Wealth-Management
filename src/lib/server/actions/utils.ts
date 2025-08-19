@@ -95,12 +95,11 @@ export function handleActionSuccess<T>(
 }
 
 /**
- * Revalidate multiple paths
+ * No cache invalidation needed for user data operations
+ * User data is always fetched fresh from database
  */
 export function revalidateMultiplePaths(paths: string[]): void {
-  for (const path of paths) {
-    revalidatePath(path)
-  }
+  console.log('[ActionUtils] No cache invalidation needed - user data always fresh')
 }
 
 /**

@@ -1,113 +1,93 @@
-import { revalidateTag, revalidatePath } from 'next/cache'
-import { DashboardDataPreparator } from './data-preparators/dashboard'
-
 /**
- * Cache invalidation utilities for server-side data
+ * Cache invalidation utilities for the application
+ * 
+ * NOTE: User data caching has been disabled as part of the dynamic data caching optimization.
+ * All user CRUD operations (investments, goals, SIPs, accounts) now always fetch fresh data
+ * from the database without any caching layer.
+ * 
+ * This file is maintained for potential future use with pricing data cache invalidation only.
  */
 export class CacheInvalidation {
   
   /**
-   * Invalidate dashboard cache when investments change
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
    */
   static invalidateDashboard(): void {
-    // Invalidate Next.js cache tags
-    revalidateTag('dashboard')
-    revalidateTag('investments')
-    revalidateTag('goals')
-    revalidateTag('sips')
-    revalidateTag('dashboard-investments')
-    revalidateTag('dashboard-goals')
-    revalidateTag('dashboard-sips')
-    
-    // Invalidate dashboard page
-    revalidatePath('/')
-    
-    // Invalidate in-memory cache
-    DashboardDataPreparator.invalidateCache()
-    
-    console.log('[CacheInvalidation] Dashboard cache invalidated')
+    console.log('[CacheInvalidation] User data cache invalidation disabled - data always fresh')
   }
 
   /**
-   * Invalidate investment-related caches
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
    */
   static invalidateInvestments(): void {
-    // Invalidate Next.js cache tags
-    revalidateTag('investments')
-    revalidateTag('dashboard')
-    revalidateTag('dashboard-investments')
-    revalidateTag('dashboard-goals')
-    revalidateTag('dashboard-sips')
-    
-    // Invalidate paths
-    revalidatePath('/')
-    revalidatePath('/investments')
-    
-    // Invalidate in-memory cache
-    DashboardDataPreparator.invalidateCache()
-    
-    console.log('[CacheInvalidation] Investment cache invalidated')
+    console.log('[CacheInvalidation] User data cache invalidation disabled - data always fresh')
   }
 
   /**
-   * Invalidate goal-related caches
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
    */
   static invalidateGoals(): void {
-    revalidateTag('goals')
-    revalidateTag('dashboard')
-    revalidatePath('/')
-    revalidatePath('/goals')
-    
-    DashboardDataPreparator.invalidateCache()
-    
-    console.log('[CacheInvalidation] Goals cache invalidated')
+    console.log('[CacheInvalidation] User data cache invalidation disabled - data always fresh')
   }
 
   /**
-   * Invalidate SIP-related caches
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
    */
   static invalidateSIPs(): void {
-    revalidateTag('sips')
-    revalidateTag('dashboard')
-    revalidatePath('/')
-    revalidatePath('/sips')
-    
-    DashboardDataPreparator.invalidateCache()
-    
-    console.log('[CacheInvalidation] SIPs cache invalidated')
+    console.log('[CacheInvalidation] User data cache invalidation disabled - data always fresh')
   }
 
   /**
-   * Invalidate price-related caches
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
    */
-  static invalidatePrices(): void {
-    revalidateTag('prices')
-    revalidateTag('dashboard')
-    revalidatePath('/')
-    
-    DashboardDataPreparator.invalidateCache()
-    
-    console.log('[CacheInvalidation] Price cache invalidated')
+  static invalidateAccounts(): void {
+    console.log('[CacheInvalidation] User data cache invalidation disabled - data always fresh')
   }
 
   /**
-   * Invalidate all caches (nuclear option)
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
+   */
+  static invalidateInvestmentDetail(investmentId: string): void {
+    console.log(`[CacheInvalidation] User data cache invalidation disabled - data always fresh for investment ${investmentId}`)
+  }
+
+  /**
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
+   */
+  static invalidateGoalDetail(goalId: string): void {
+    console.log(`[CacheInvalidation] User data cache invalidation disabled - data always fresh for goal ${goalId}`)
+  }
+
+  /**
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
+   */
+  static invalidateSIPDetail(sipId: string): void {
+    console.log(`[CacheInvalidation] User data cache invalidation disabled - data always fresh for SIP ${sipId}`)
+  }
+
+  /**
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
+   */
+  static invalidateAccountDetail(accountId: string): void {
+    console.log(`[CacheInvalidation] User data cache invalidation disabled - data always fresh for account ${accountId}`)
+  }
+
+  /**
+   * User data cache invalidation is no longer needed
+   * All user data operations now bypass cache and fetch fresh data from database
+   * 
+   * Note: This method is preserved for potential future use with pricing data cache invalidation
    */
   static invalidateAll(): void {
-    revalidateTag('dashboard')
-    revalidateTag('investments')
-    revalidateTag('goals')
-    revalidateTag('sips')
-    revalidateTag('prices')
-    
-    revalidatePath('/')
-    revalidatePath('/investments')
-    revalidatePath('/goals')
-    revalidatePath('/sips')
-    revalidatePath('/charts')
-    
-    DashboardDataPreparator.invalidateCache()
-    
-    console.log('[CacheInvalidation] All caches invalidated')
+    console.log('[CacheInvalidation] User data cache invalidation disabled - all user data always fresh')
   }
 }

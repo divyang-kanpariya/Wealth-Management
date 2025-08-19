@@ -214,25 +214,101 @@ export function InvestmentInteractions({
     setIsEditModalOpen(true);
   };
 
-  // Handle refresh prices
+  // Handle refresh prices - enhanced with progress tracking and better error handling
   const handleRefreshPrices = async () => {
     try {
-      setStatusMessage({ type: 'success', text: 'Refreshing prices...' });
+      setStatusMessage({ type: 'success', text: 'Starting fresh price refresh from API...' });
       
-      // Import dashboard refresh action dynamically
-      const { refreshDashboard } = await import('@/app/actions/dashboard');
+      // Import enhanced refresh actions dynamically
+      const { refreshDashboard, getRefreshStatus } = await import('@/app/actions/dashboard');
       const result = await refreshDashboard();
       
-      if (result.success) {
-        setStatusMessage({ type: 'success', text: 'Prices refreshed successfully' });
+      if (result.success && result.requestId) {
+        setStatusMessage({ type: 'success', text: 'Fetching fresh prices from API...' });
+        
+        // Poll for progress updates
+        const pollForProgress = async (requestId: string, attempts = 0) => {
+          const maxAttempts = 60; // 60 seconds max
+          
+          if (attempts >= maxAttempts) {
+            setStatusMessage({ type: 'error', text: 'Refresh timeout - please try again' });
+            setTimeout(() => setStatusMessage(null), 5000);
+            return;
+          }
+          
+          try {
+            const statusResult = await getRefreshStatus(requestId);
+            
+            if (statusResult.success && statusResult.status) {
+              const status = statusResult.status;
+              
+              if (status.status === 'completed') {
+                const results = status.results;
+                if (results) {
+                  if (results.failed > 0) {
+                    setStatusMessage({ 
+                      type: 'error', 
+                      text: `Refresh completed with issues: ${results.success} success, ${results.failed} failed` 
+                    });
+                    setTimeout(() => setStatusMessage(null), 8000);
+                  } else {
+                    setStatusMessage({ 
+                      type: 'success', 
+                      text: `Fresh prices fetched successfully! Updated ${results.success} symbols in ${results.duration}ms` 
+                    });
+                    setTimeout(() => setStatusMessage(null), 5000);
+                  }
+                } else {
+                  setStatusMessage({ type: 'success', text: 'Fresh prices fetched from API successfully' });
+                  setTimeout(() => setStatusMessage(null), 3000);
+                }
+              } else if (status.status === 'failed') {
+                setStatusMessage({ 
+                  type: 'error', 
+                  text: `Refresh failed: ${status.error || 'Unknown error'}` 
+                });
+                setTimeout(() => setStatusMessage(null), 8000);
+              } else if (status.status === 'cancelled') {
+                setStatusMessage({ type: 'error', text: 'Refresh was cancelled' });
+                setTimeout(() => setStatusMessage(null), 5000);
+              } else if (status.status === 'in-progress') {
+                // Update progress message
+                const progress = status.progress;
+                setStatusMessage({ 
+                  type: 'success', 
+                  text: `Refreshing prices... ${progress.completed}/${progress.total} (${progress.percentage}%)` 
+                });
+                
+                // Continue polling
+                setTimeout(() => pollForProgress(requestId, attempts + 1), 1000);
+              } else {
+                // Still pending, continue polling
+                setTimeout(() => pollForProgress(requestId, attempts + 1), 1000);
+              }
+            } else {
+              // Status not found, assume completed
+              setStatusMessage({ type: 'success', text: 'Fresh prices fetched from API successfully' });
+              setTimeout(() => setStatusMessage(null), 3000);
+            }
+          } catch (pollError) {
+            console.error('Error polling refresh status:', pollError);
+            // Continue polling with reduced frequency
+            setTimeout(() => pollForProgress(requestId, attempts + 1), 2000);
+          }
+        };
+        
+        // Start polling after a short delay
+        setTimeout(() => pollForProgress(result.requestId), 1000);
+        
       } else {
-        setStatusMessage({ type: 'error', text: result.message || 'Failed to refresh prices' });
+        setStatusMessage({ type: 'error', text: result.message || 'Failed to start price refresh' });
+        setTimeout(() => setStatusMessage(null), 5000);
       }
     } catch (error) {
-      setStatusMessage({ type: 'error', text: 'Failed to refresh prices' });
+      console.error('Refresh error:', error);
+      setStatusMessage({ type: 'error', text: 'Failed to fetch fresh prices from API' });
+      setTimeout(() => setStatusMessage(null), 5000);
     }
-    
-    setTimeout(() => setStatusMessage(null), 3000);
   };
 
   // Advanced features handlers

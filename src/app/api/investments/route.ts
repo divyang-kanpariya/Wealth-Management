@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma'
 import { validateInvestment } from '@/lib/validations'
 import { withErrorHandling, parseRequestBody, createSuccessResponse } from '@/lib/api-handler'
 import { investmentPagination, extractPaginationParams } from '@/lib/pagination'
-import { CacheInvalidation } from '@/lib/server/cache-invalidation'
 
 export const GET = withErrorHandling(async (request: NextRequest) => {
   const { searchParams } = new URL(request.url)
@@ -74,8 +73,7 @@ export const POST = withErrorHandling(async (request: NextRequest) => {
     },
   })
   
-  // Invalidate dashboard cache when new investment is created
-  CacheInvalidation.invalidateInvestments()
+  // No cache invalidation needed - user data is always fetched fresh
   
   return createSuccessResponse(investment, 201)
 })

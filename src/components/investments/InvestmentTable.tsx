@@ -238,7 +238,7 @@ const InvestmentTable: React.FC<InvestmentTableProps> = ({
     <DropdownMenu
       items={getActionItems(item)}
       size="sm"
-      placement="bottom-right"
+      placement="auto"
     />
   );
 

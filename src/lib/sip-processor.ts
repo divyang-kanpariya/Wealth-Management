@@ -1,5 +1,5 @@
 import { SIP, SIPTransaction } from '@/types'
-import { getMutualFundNAVWithFallback } from '@/lib/price-fetcher'
+import { getPriceWithFallback } from '@/lib/price-fetcher'
 import { calculateNextSipDate, getSipsDueForProcessing, calculateSipTransactionUnits } from '@/lib/calculations'
 import { prisma } from '@/lib/prisma'
 
@@ -56,16 +56,16 @@ export async function processSIPTransaction(
       throw new Error('SIP has reached its end date and has been marked as completed')
     }
     
-    // Fetch current NAV for the mutual fund
-    console.log(`Fetching NAV for scheme code: ${sip.symbol}`)
-    const navResult = await getMutualFundNAVWithFallback(sip.symbol, false)
-    const nav = navResult.nav
+    // Fetch current price for the mutual fund using unified price fetcher
+    console.log(`Fetching price for scheme code: ${sip.symbol}`)
+    const priceResult = await getPriceWithFallback(sip.symbol, false)
+    const nav = priceResult.price
     
     if (!nav || nav <= 0) {
       throw new Error(`Invalid NAV received: ${nav}`)
     }
     
-    console.log(`NAV fetched: ${nav} (Source: ${navResult.source})`)
+    console.log(`Price fetched: ${nav} (Source: ${priceResult.source})`)
     
     // Calculate units to be purchased
     const units = calculateSipTransactionUnits(sip.amount, nav)

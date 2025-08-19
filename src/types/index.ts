@@ -233,3 +233,45 @@ export interface SIPSummary {
   totalGainLoss: number
   totalGainLossPercentage: number
 }
+
+// Enhanced refresh functionality types
+export interface RefreshProgress {
+  total: number
+  completed: number
+  failed: number
+  currentSymbol?: string
+  percentage: number
+}
+
+export interface RefreshResult {
+  success: number
+  failed: number
+  duration: number
+  results: Array<{
+    symbol: string
+    success: boolean
+    price?: number
+    source?: string
+    error?: string
+    refreshTime: number
+  }>
+}
+
+export interface RefreshStatus {
+  requestId: string
+  status: 'pending' | 'in-progress' | 'completed' | 'failed' | 'cancelled'
+  progress: RefreshProgress
+  startTime: Date
+  endTime?: Date
+  results?: RefreshResult
+  error?: string
+}
+
+export interface RefreshOptions {
+  forceRefresh?: boolean
+  symbols?: string[]
+  includeStocks?: boolean
+  includeMutualFunds?: boolean
+  batchSize?: number
+  timeout?: number
+}

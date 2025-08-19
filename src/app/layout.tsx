@@ -5,6 +5,13 @@ import ErrorBoundary from '../components/ErrorBoundary'
 import { ToastProvider } from '../components/ui/Toast'
 import BrowserCompatibility from '../components/BrowserCompatibility'
 
+// Initialize background price refresh service
+if (typeof window === 'undefined') {
+  import('../lib/server/background-price-refresh').then(({ backgroundPriceRefresh }) => {
+    backgroundPriceRefresh.start()
+  })
+}
+
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {

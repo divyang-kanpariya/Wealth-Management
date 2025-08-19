@@ -2,7 +2,6 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach, vi } 
 import { PrismaClient } from '@prisma/client'
 import {
   getPriceWithFallback,
-  getMutualFundNAVWithFallback,
   savePriceHistory,
   getPriceHistory,
   getPriceTrend,
@@ -40,17 +39,32 @@ vi.mock('@/lib/price-fetcher', async () => {
       })
       return mockPrices
     }),
-    fetchMutualFundNAV: vi.fn().mockImplementation(async (schemeCodes?: string[]) => {
-      const mockNavData = [
-        { schemeCode: '123456', nav: 150.75, date: '2024-01-26', schemeName: 'Test Mutual Fund 1' },
-        { schemeCode: '789012', nav: 89.25, date: '2024-01-26', schemeName: 'Test Mutual Fund 2' }
-      ]
-      
-      if (schemeCodes) {
-        return mockNavData.filter(item => schemeCodes.includes(item.schemeCode))
+    fetchUnifiedPrices: vi.fn().mockImplementation(async (symbols: string[]) => {
+      const mockPrices: { [key: string]: number } = {
+        'NSE:RELIANCE': 2500,
+        'NSE:INFY': 1500,
+        'MUTF_IN:123456': 150.75,
+        'MUTF_IN:789012': 89.25
       }
       
-      return mockNavData
+      const result: { [key: string]: number } = {}
+      for (const symbol of symbols) {
+        // Format symbol for lookup
+        let formattedSymbol: string
+        if (symbol.includes("_")) {
+          formattedSymbol = `MUTF_IN:${symbol}`
+        } else if (symbol.startsWith('NSE:') || symbol.startsWith('MUTF_IN:')) {
+          formattedSymbol = symbol
+        } else {
+          formattedSymbol = `NSE:${symbol}`
+        }
+        
+        if (mockPrices[formattedSymbol]) {
+          result[formattedSymbol] = mockPrices[formattedSymbol]
+        }
+      }
+      
+      return result
     })
   }
 })
@@ -199,11 +213,11 @@ describe('Enhanced Price Data Management', () => {
     })
   })
 
-  describe('Enhanced Mutual Fund NAV Fetching', () => {
-    it('should fetch fresh NAV and save to history', async () => {
-      const result = await getMutualFundNAVWithFallback('123456')
+  describe('Enhanced Mutual Fund Price Fetching', () => {
+    it('should fetch fresh price and save to history', async () => {
+      const result = await getPriceWithFallback('123456')
       
-      expect(result.nav).toBe(150.75)
+      expect(result.price).toBe(150.75)
       expect(result.source).toBe('AMFI')
       expect(result.cached).toBe(false)
       expect(result.fallbackUsed).toBe(false)
@@ -216,15 +230,15 @@ describe('Enhanced Price Data Management', () => {
 
     it('should use fallback mechanisms for mutual funds', async () => {
       // First, populate cache
-      await getMutualFundNAVWithFallback('123456')
+      await getPriceWithFallback('123456')
       
       // Mock API failure
-      const mockFetchMutualFundNAV = vi.mocked(
+      const mockFetchUnifiedPrices = vi.mocked(
         await import('@/lib/price-fetcher')
-      ).fetchMutualFundNAV
-      mockFetchMutualFundNAV.mockRejectedValueOnce(new Error('AMFI API failure'))
+      ).fetchUnifiedPrices
+      mockFetchUnifiedPrices.mockRejectedValueOnce(new Error('Unified API failure'))
       
-      const result = await getMutualFundNAVWithFallback('123456', true)
+      const result = await getPriceWithFallback('123456', true)
       expect(result.fallbackUsed).toBe(true)
     })
   })

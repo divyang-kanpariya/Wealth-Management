@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { 
@@ -10,7 +9,7 @@ import {
   updateSipSchema 
 } from '@/lib/validations'
 import { calculateSipValue } from '@/lib/calculations'
-import { CacheInvalidation } from '../cache-invalidation'
+
 import { SIPStatus } from '@prisma/client'
 
 export type SipActionResult = {
@@ -86,8 +85,7 @@ export async function createSip(formData: FormData): Promise<SipActionResult> {
     
     const sipWithValue = calculateSipValue(transformedSip, transformedTransactions)
     
-    // Invalidate caches
-    CacheInvalidation.invalidateSIPs()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -154,7 +152,7 @@ export async function createSipFromData(data: any): Promise<SipActionResult> {
     
     const sipWithValue = calculateSipValue(transformedSip, transformedTransactions)
     
-    CacheInvalidation.invalidateSIPs()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -269,8 +267,7 @@ export async function updateSip(id: string, formData: FormData): Promise<SipActi
     
     const sipWithValue = calculateSipValue(transformedSip, transformedTransactions, currentPrice)
     
-    // Invalidate caches
-    CacheInvalidation.invalidateSIPs()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -358,7 +355,7 @@ export async function updateSipFromData(id: string, data: any): Promise<SipActio
     
     const sipWithValue = calculateSipValue(transformedSip, transformedTransactions, currentPrice)
     
-    CacheInvalidation.invalidateSIPs()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,
@@ -397,8 +394,7 @@ export async function deleteSip(id: string): Promise<SipActionResult> {
       where: { id }
     })
     
-    // Invalidate caches
-    CacheInvalidation.invalidateSIPs()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true
@@ -472,8 +468,7 @@ export async function updateSipStatus(id: string, status: SIPStatus): Promise<Si
     
     const sipWithValue = calculateSipValue(transformedSip, transformedTransactions, currentPrice)
     
-    // Invalidate caches
-    CacheInvalidation.invalidateSIPs()
+    // No cache invalidation needed - user data is always fetched fresh
     
     return {
       success: true,

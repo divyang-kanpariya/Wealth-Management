@@ -2,7 +2,6 @@
 
 import { prisma } from '@/lib/prisma'
 import { validateCsvImportRow } from '@/lib/validations'
-import { CacheInvalidation } from '../cache-invalidation'
 
 export type ImportActionResult = {
   success: boolean
@@ -178,8 +177,7 @@ export async function confirmCsvImport(validRows: any[]): Promise<ImportActionRe
       }
     }
 
-    // Invalidate caches after import
-    CacheInvalidation.invalidateAll()
+    // No cache invalidation needed - user data is always fetched fresh
 
     return {
       success: true,

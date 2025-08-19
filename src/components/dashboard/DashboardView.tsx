@@ -125,15 +125,14 @@ export function DashboardView({ data }: DashboardViewProps) {
               )}
             </div>
             <div className="flex space-x-2">
-              <RefreshButton variant="normal" />
-              <RefreshButton variant="force" />
+              <RefreshButton />
             </div>
           </div>
         </CompactCard>
 
         {/* Floating Refresh Button */}
         <div className="fixed bottom-6 right-6">
-          <RefreshButton variant="normal" />
+          <RefreshButton />
         </div>
       </div>
     </Layout>
