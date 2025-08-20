@@ -49,89 +49,105 @@ export function DashboardView({ data }: DashboardViewProps) {
 
   return (
     <Layout>
-      <div className="space-y-4">
+      <div className="space-y-4 animate-stagger">
         {/* Portfolio Summary */}
-        <CompactPortfolioSummary summary={data.portfolioSummary} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <CompactPortfolioSummary summary={data.portfolioSummary} />
+        </div>
         
         {/* Quick Stats */}
-        <CompactQuickStats dashboardData={{
-          portfolioSummary: data.portfolioSummary,
-          goalProgress: data.goalProgress,
-          totalInvestments: data.totalInvestments,
-          totalGoals: data.totalGoals
-        }} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <CompactQuickStats dashboardData={{
+            portfolioSummary: data.portfolioSummary,
+            goalProgress: data.goalProgress,
+            totalInvestments: data.totalInvestments,
+            totalGoals: data.totalGoals
+          }} />
+        </div>
         
         {/* Asset Allocation and Account Distribution */}
         {data.portfolioSummary && (
-          <CompactAssetAllocation 
-            assetAllocation={data.portfolioSummary.assetAllocation}
-            accountDistribution={data.portfolioSummary.accountDistribution}
-          />
+          <div className="animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <CompactAssetAllocation 
+              assetAllocation={data.portfolioSummary.assetAllocation}
+              accountDistribution={data.portfolioSummary.accountDistribution}
+            />
+          </div>
         )}
 
         {/* Goal Progress */}
-        <CompactGoalProgress goals={data.goalProgress} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+          <CompactGoalProgress goals={data.goalProgress} />
+        </div>
 
         {/* Top Performers */}
-        <CompactTopPerformers investments={data.investmentsWithValues} />
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+          <CompactTopPerformers investments={data.investmentsWithValues} />
+        </div>
         
         {/* Performance Insights */}
-        <CompactCard
-          title="Performance Insights"
-          variant="minimal"
-          collapsible
-          defaultCollapsed={false}
-        >
-          <DataGrid
-            items={[
-              {
-                label: 'Profitable Investments',
-                value: (
-                  <span className="text-2xl font-bold">
-                    {data.investmentsWithValues.filter(inv => inv.gainLoss > 0).length}
-                  </span>
-                ),
-                color: 'success'
-              },
-              {
-                label: 'Loss-making Investments',
-                value: (
-                  <span className="text-2xl font-bold">
-                    {data.investmentsWithValues.filter(inv => inv.gainLoss < 0).length}
-                  </span>
-                ),
-                color: 'danger'
-              }
-            ]}
-            columns={2}
-            variant="default"
-          />
-        </CompactCard>
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+          <CompactCard
+            title="Performance Insights"
+            variant="minimal"
+            collapsible
+            defaultCollapsed={false}
+            className="card-hover"
+          >
+            <DataGrid
+              items={[
+                {
+                  label: 'Profitable Investments',
+                  value: (
+                    <span className="text-2xl font-bold text-green-600 animate-bounce-subtle">
+                      {data.investmentsWithValues.filter(inv => inv.gainLoss > 0).length}
+                    </span>
+                  ),
+                  color: 'success'
+                },
+                {
+                  label: 'Loss-making Investments',
+                  value: (
+                    <span className="text-2xl font-bold text-red-600 animate-pulse-subtle">
+                      {data.investmentsWithValues.filter(inv => inv.gainLoss < 0).length}
+                    </span>
+                  ),
+                  color: 'danger'
+                }
+              ]}
+              columns={2}
+              variant="default"
+            />
+          </CompactCard>
+        </div>
 
         {/* Cache Info and Refresh Buttons */}
-        <CompactCard
-          title="Data Status"
-          variant="minimal"
-          collapsible
-          defaultCollapsed={true}
-        >
-          <div className="space-y-3">
-            <div className="text-sm text-gray-600">
-              <div>Last updated: {data.timestamp.toLocaleString()}</div>
-              {data.cacheKey && (
-                <div className="text-xs text-gray-500 mt-1">
-                  Cache key: {data.cacheKey}
-                </div>
-              )}
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.7s' }}>
+          <CompactCard
+            title="Data Status"
+            variant="minimal"
+            collapsible
+            defaultCollapsed={true}
+            className="card-hover"
+          >
+            <div className="space-y-3">
+              <div className="text-sm text-gray-600 animate-fade-in">
+                <div>Last updated: {data.timestamp.toLocaleString()}</div>
+                {data.cacheKey && (
+                  <div className="text-xs text-gray-500 mt-1">
+                    Cache key: {data.cacheKey}
+                  </div>
+                )}
+              </div>
+              <div className="flex space-x-2">
+                <RefreshButton />
+              </div>
             </div>
-            <div className="flex space-x-2">
-              <RefreshButton />
-            </div>
-          </div>
-        </CompactCard>
+          </CompactCard>
+        </div>
 
         {/* Floating Refresh Button */}
-        <div className="fixed bottom-6 right-6">
+        <div className="fixed bottom-6 right-6 animate-float">
           <RefreshButton />
         </div>
       </div>

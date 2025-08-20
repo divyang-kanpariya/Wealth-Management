@@ -94,25 +94,33 @@ interface ToastItemProps {
 
 function ToastItem({ toast, onRemove }: ToastItemProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
 
   useEffect(() => {
-    // Trigger animation
-    setTimeout(() => setIsVisible(true), 10);
+    // Trigger entrance animation
+    const timer = setTimeout(() => setIsVisible(true), 50);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleRemove = () => {
+    setIsExiting(true);
     setIsVisible(false);
     setTimeout(() => onRemove(toast.id), 300);
   };
 
   const getToastStyles = () => {
-    const baseStyles = 'max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out';
+    const baseStyles = `
+      max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto 
+      ring-1 ring-black ring-opacity-5 overflow-hidden transform 
+      transition-all duration-300 ease-out
+      ${isExiting ? 'toast-exit' : isVisible ? 'toast-enter' : ''}
+    `;
     
-    if (!isVisible) {
-      return `${baseStyles} translate-x-full opacity-0`;
+    if (isExiting || !isVisible) {
+      return `${baseStyles} translate-x-full opacity-0 scale-95`;
     }
     
-    return `${baseStyles} translate-x-0 opacity-100`;
+    return `${baseStyles} translate-x-0 opacity-100 scale-100 hover:scale-105 hover:shadow-xl`;
   };
 
   const getIconColor = () => {
@@ -165,23 +173,23 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
     <div className={getToastStyles()}>
       <div className="p-4">
         <div className="flex items-start">
-          <div className={`flex-shrink-0 ${getIconColor()}`}>
+          <div className={`flex-shrink-0 ${getIconColor()} animate-bounce-subtle`}>
             {getIcon()}
           </div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
             {toast.title && (
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-medium text-gray-900 animate-fade-in-up">
                 {toast.title}
               </p>
             )}
-            <p className={`text-sm text-gray-500 ${toast.title ? 'mt-1' : ''}`}>
+            <p className={`text-sm text-gray-500 ${toast.title ? 'mt-1' : ''} animate-fade-in-up`} style={{ animationDelay: '0.1s' }}>
               {toast.message}
             </p>
             {toast.action && (
-              <div className="mt-3">
+              <div className="mt-3 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 <button
                   type="button"
-                  className="text-sm font-medium text-blue-600 hover:text-blue-500"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-all duration-200 hover:scale-105 btn-ripple"
                   onClick={toast.action.onClick}
                 >
                   {toast.action.label}
@@ -191,17 +199,30 @@ function ToastItem({ toast, onRemove }: ToastItemProps) {
           </div>
           <div className="ml-4 flex-shrink-0 flex">
             <button
-              className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 hover:scale-110 hover:bg-gray-50"
               onClick={handleRemove}
             >
               <span className="sr-only">Close</span>
-              <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <svg className="h-5 w-5 transition-transform duration-200 hover:rotate-90" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
               </svg>
             </button>
           </div>
         </div>
       </div>
+      
+      {/* Progress bar for auto-dismiss */}
+      {toast.duration && toast.duration > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200">
+          <div 
+            className="h-full bg-blue-500 progress-bar"
+            style={{ 
+              animation: `progress-bar ${toast.duration}ms linear`,
+              '--progress-width': '100%'
+            } as React.CSSProperties}
+          />
+        </div>
+      )}
     </div>
   );
 }

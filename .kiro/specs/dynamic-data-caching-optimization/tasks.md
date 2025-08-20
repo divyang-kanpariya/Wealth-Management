@@ -321,7 +321,9 @@
   - Test on both desktop and mobile for readability
   - _Requirements: 4.8, 5.6, 6.9_
 
-- [x] 20. Create documentation for background functions and deployment
+- [-] 20. Create documentation for background functions and deployment
+
+
 
 
 
@@ -337,3 +339,52 @@
   - Highlight areas where action/decision is needed (e.g., “cron job X needs external scheduler”, “function Y must be moved to API route”)
   - Ensure documentation is clear enough for future maintenance without guessing the logic
   - _Requirements: 5.1, 6.3, 7.2_
+
+  - [ ] 20. Create documentation for background functions and deployment
+  - Review the entire codebase and document all background functions (cron jobs, schedulers, workers, etc.)
+  - For each background function:
+    - Explain its purpose and why it was implemented
+    - Clarify if it needs to be separated into a standalone service or can run within the main app
+    - Provide instructions on how it should be deployed/managed (especially on Vercel where traditional cron jobs don’t run)
+  - List all required configurations, environment variables, and third-party services used by background tasks
+  - Document potential alternatives for running cron-like tasks in Vercel (e.g., serverless functions + external scheduler, moving to separate worker service)
+  - Add step-by-step guide for releasing the project on Vercel while ensuring all background tasks continue working
+  - Highlight areas where action/decision is needed (e.g., “cron job X needs external scheduler”, “function Y must be moved to API route”)
+  - Ensure documentation is clear enough for future maintenance without guessing the logic
+  - _Requirements: 5.1, 6.3, 7.2_
+
+- [x] 21. Improve User Experience with Loaders, Animations & Micro-Interactions
+
+
+
+
+
+  - Review the entire codebase and identify areas where user interaction feels abrupt or lacks feedback
+  - Add smooth loaders/spinners where data fetching or processing takes noticeable time
+    - Example: API calls, form submission, navigation between pages, file uploads
+  - Implement hover effects and subtle animations on buttons, cards, and interactive elements
+  - Add micro-interactions to improve engagement (e.g., button press ripple, success/failure toast with fade-in/out)
+  - Use smooth transitions for page changes, modal openings, and dropdowns
+  - Ensure animations are lightweight and do not affect performance
+  - Add skeleton loaders where content (lists, profiles, dashboards) takes time to load
+  - Standardize animations across the app for consistency (e.g., same easing curves, durations)
+  - Test across devices to ensure smooth experience on both mobile and desktop
+  - Document where loaders, animations, and effects are added for future maintainability
+  - _Requirements: 4.2, 6.1, 8.5_
+
+- [x] 22. Fix Dialog Animation Flickering & Consistency
+
+
+
+
+
+  - Review the current dialog/modal implementation and animation logic  
+  - Identify why the dialog animation only plays once and not on reopen  
+  - Ensure opening/closing animations trigger correctly every time the dialog is used  
+  - Remove any unnecessary re-renders or `unmount` issues causing flicker  
+  - Add smooth enter/exit transitions (fade-in, scale, or slide) for a consistent experience  
+  - Test across multiple browsers and devices to confirm stable animations  
+  - Optimize for performance (animations should not block UI thread)  
+  - Standardize dialog animation timing with other app animations (same easing, duration)  
+  - Document fixes and update animation guidelines for dialogs/modals  
+  - _Requirements: 6.2, 8.5, 9.3_

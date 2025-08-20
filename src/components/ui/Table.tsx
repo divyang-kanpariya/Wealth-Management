@@ -87,39 +87,60 @@ function Table<T>({
 
   if (loading) {
     return (
-      <div className={`bg-white shadow-sm rounded-lg border ${className}`}>
-        <LoadingState message="Loading..." />
+      <div className={`bg-white shadow-sm rounded-lg border ${className} animate-fade-in`}>
+        <div className="p-6">
+          <div className="animate-stagger space-y-4">
+            {/* Header skeleton */}
+            <div className="flex space-x-4">
+              {columns.map((_, index) => (
+                <div key={index} className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded animate-shimmer" style={{ animationDelay: `${index * 0.1}s` }} />
+                </div>
+              ))}
+            </div>
+            {/* Row skeletons */}
+            {Array.from({ length: 5 }).map((_, rowIndex) => (
+              <div key={rowIndex} className="flex space-x-4" style={{ animationDelay: `${(rowIndex + columns.length) * 0.1}s` }}>
+                {columns.map((_, colIndex) => (
+                  <div key={colIndex} className="flex-1">
+                    <div className="h-8 bg-gray-200 rounded animate-shimmer" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className={`bg-white shadow-sm rounded-lg border ${className}`}>
+      <div className={`bg-white shadow-sm rounded-lg border ${className} animate-fade-in`}>
         <div className="p-8 text-center">
-          <div className="text-gray-400 mb-4">
+          <div className="text-gray-400 mb-4 animate-bounce-subtle">
             <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
-          <p className="text-gray-600">{emptyMessage}</p>
+          <p className="text-gray-600 animate-fade-in-up">{emptyMessage}</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`bg-white shadow-sm rounded-lg border overflow-hidden ${className}`}>
+    <div className={`bg-white shadow-sm rounded-lg border overflow-hidden ${className} animate-fade-in card-hover`}>
       {/* Responsive Table */}
       <div className="table-mobile-scroll scrollbar-thin">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
-            <tr>
+            <tr className="animate-fade-in-down">
               {selectable && (
                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-12">
                   <input
                     type="checkbox"
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-200 hover:scale-110"
                     checked={data.length > 0 && selectedItems.length === data.length}
                     onChange={(e) => {
                       if (onSelectionChange) {
@@ -136,14 +157,19 @@ function Table<T>({
               {columns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${column.sortable ? 'cursor-pointer hover:bg-gray-100' : ''
-                    } ${column.className || ''} ${column.mobileHidden ? 'hidden md:table-cell' : ''}`}
+                  className={`px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider transition-all duration-200 ${
+                    column.sortable ? 'cursor-pointer hover:bg-gray-100 hover:text-gray-700' : ''
+                  } ${column.className || ''} ${column.mobileHidden ? 'hidden md:table-cell' : ''}`}
                   style={{ width: column.width }}
                   onClick={() => column.sortable && handleSort(column.key)}
                 >
                   <div className="flex items-center space-x-1">
                     <span>{column.title}</span>
-                    {column.sortable && getSortIcon(column.key)}
+                    {column.sortable && (
+                      <span className="transition-transform duration-200 hover:scale-110">
+                        {getSortIcon(column.key)}
+                      </span>
+                    )}
                   </div>
                 </th>
               ))}
@@ -154,14 +180,16 @@ function Table<T>({
               )}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {data.map((item) => {
+          <tbody className="bg-white divide-y divide-gray-200 animate-stagger">
+            {data.map((item, index) => {
               const key = rowKey(item);
               return (
                 <tr
                   key={key}
                   className={`${onRowClick ? 'cursor-pointer hover:bg-gray-50' : ''
-                    } ${hoveredRow === key ? 'bg-gray-50' : ''} transition-colors`}
+                    } ${hoveredRow === key ? 'bg-gray-50 transform scale-[1.01]' : ''} 
+                    transition-all duration-200 hover:shadow-sm`}
+                  style={{ animationDelay: `${index * 0.05}s` }}
                   onMouseEnter={() => setHoveredRow(key)}
                   onMouseLeave={() => setHoveredRow(null)}
                   onClick={() => onRowClick && onRowClick(item)}
@@ -170,7 +198,7 @@ function Table<T>({
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 transition-all duration-200 hover:scale-110"
                         checked={isSelected(item)}
                         onChange={(e) => handleSelectionChange(item, e)}
                         onClick={(e) => e.stopPropagation()}
@@ -182,7 +210,9 @@ function Table<T>({
                     return (
                       <td
                         key={column.key}
-                        className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm ${column.className || ''} ${column.mobileHidden ? 'hidden md:table-cell' : ''}`}
+                        className={`px-3 sm:px-6 py-4 whitespace-nowrap text-sm transition-all duration-200 ${
+                          column.className || ''
+                        } ${column.mobileHidden ? 'hidden md:table-cell' : ''}`}
                       >
                         {column.render ? column.render(value, item) : value}
                       </td>
@@ -190,7 +220,7 @@ function Table<T>({
                   })}
                   {actions && (
                     <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div onClick={(e) => e.stopPropagation()}>
+                      <div onClick={(e) => e.stopPropagation()} className="transition-all duration-200 hover:scale-105">
                         {actions(item)}
                       </div>
                     </td>

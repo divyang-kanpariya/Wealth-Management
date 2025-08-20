@@ -178,39 +178,43 @@ const DropdownMenu: React.FC<DropdownMenuProps> = ({
           ref={menuRef}
           role="menu"
           aria-orientation="vertical"
-          className={getMenuClasses()}
+          className={`${getMenuClasses()} dropdown-enter`}
         >
-          {items.map((item, index) => (
-            <React.Fragment key={item.id}>
-              {item.separator && index > 0 && (
-                <div className="border-t border-gray-100 my-1" />
-              )}
-              <button
-                role="menuitem"
-                onClick={() => handleItemClick(item)}
-                disabled={item.disabled}
-                className={`
-                  w-full px-3 py-2 text-left text-sm
-                  flex items-center space-x-3
-                  transition-colors duration-150
-                  ${item.disabled
-                    ? 'text-gray-400 cursor-not-allowed'
-                    : item.variant === 'danger'
-                      ? 'text-red-600 hover:bg-red-50 hover:text-red-700'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }
-                  focus:outline-none focus:bg-gray-50
-                `}
-              >
-                <span className={`flex-shrink-0 ${iconSizeClasses[size]}`}>
-                  {item.icon}
-                </span>
-                <span className="truncate">
-                  {item.label}
-                </span>
-              </button>
-            </React.Fragment>
-          ))}
+          <div className="animate-stagger">
+            {items.map((item, index) => (
+              <React.Fragment key={item.id}>
+                {item.separator && index > 0 && (
+                  <div className="border-t border-gray-100 my-1" />
+                )}
+                <button
+                  role="menuitem"
+                  onClick={() => handleItemClick(item)}
+                  disabled={item.disabled}
+                  className={`
+                    w-full px-3 py-2 text-left text-sm
+                    flex items-center space-x-3
+                    transition-all duration-200 ease-out
+                    transform hover:scale-[1.02] hover:translate-x-1
+                    ${item.disabled
+                      ? 'text-gray-400 cursor-not-allowed'
+                      : item.variant === 'danger'
+                        ? 'text-red-600 hover:bg-red-50 hover:text-red-700 hover:shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:shadow-sm'
+                    }
+                    focus:outline-none focus:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-inset
+                  `}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <span className={`flex-shrink-0 ${iconSizeClasses[size]} transition-transform duration-200 hover:scale-110`}>
+                    {item.icon}
+                  </span>
+                  <span className="truncate">
+                    {item.label}
+                  </span>
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
         </div>
       )}
     </div>
