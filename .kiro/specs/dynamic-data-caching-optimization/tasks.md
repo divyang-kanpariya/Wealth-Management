@@ -320,3 +320,20 @@
   - Validate inflation adjustment toggle updates only one unified section
   - Test on both desktop and mobile for readability
   - _Requirements: 4.8, 5.6, 6.9_
+
+- [x] 20. Create documentation for background functions and deployment
+
+
+
+
+  - Review the entire codebase and document all background functions (cron jobs, schedulers, workers, etc.)
+  - For each background function:
+    - Explain its purpose and why it was implemented
+    - Clarify if it needs to be separated into a standalone service or can run within the main app
+    - Provide instructions on how it should be deployed/managed (especially on Vercel where traditional cron jobs don’t run)
+  - List all required configurations, environment variables, and third-party services used by background tasks
+  - Document potential alternatives for running cron-like tasks in Vercel (e.g., serverless functions + external scheduler, moving to separate worker service)
+  - Add step-by-step guide for releasing the project on Vercel while ensuring all background tasks continue working
+  - Highlight areas where action/decision is needed (e.g., “cron job X needs external scheduler”, “function Y must be moved to API route”)
+  - Ensure documentation is clear enough for future maintenance without guessing the logic
+  - _Requirements: 5.1, 6.3, 7.2_
