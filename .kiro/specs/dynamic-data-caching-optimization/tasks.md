@@ -388,3 +388,20 @@
   - Standardize dialog animation timing with other app animations (same easing, duration)  
   - Document fixes and update animation guidelines for dialogs/modals  
   - _Requirements: 6.2, 8.5, 9.3_
+
+- [x] 23. Audit & Clean Up Prisma Schema and Database Tables
+
+
+
+
+
+  - Review the current Prisma schema and all defined models  
+  - Cross-check schema models with actual application code usage  
+  - Identify unused models/tables not referenced in any service, resolver, or query  
+  - Confirm with the team before removing any models/tables  
+  - Update `schema.prisma` to remove unused models  
+  - Run `prisma migrate` to update database schema accordingly  
+  - Verify database consistency after migration (no orphaned relations, data loss risks)  
+  - Test all affected APIs and features to ensure no regressions  
+  - Document which tables were removed and why for future reference  
+  - _Requirements: 7.4, 9.1, 10.3_
